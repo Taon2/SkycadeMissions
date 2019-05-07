@@ -1,0 +1,6 @@
+name: skycademissions
+version: 1.0.0-SNAPSHOT
+description: Skycade Missions
+authors: ["Christian Doughty (Taon2)"]
+main: net.skycade.skycademissions.SkycadeMissionsPlugin
+depend: [SkycadeCore]
