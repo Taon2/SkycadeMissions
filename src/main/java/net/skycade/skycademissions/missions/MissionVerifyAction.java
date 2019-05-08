@@ -2,6 +2,7 @@ package net.skycade.skycademissions.missions;
 
 import net.skycade.SkycadeCore.utility.command.InventoryUtil;
 import net.skycade.skycademissions.missions.types.MissionType;
+import net.skycade.skycademissions.util.Messages;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 
+import static net.skycade.skycademissions.util.Messages.*;
+
 public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEvent> {
 
     private final Mission mission;
@@ -23,20 +26,20 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
     }
 
     @Override
-    public void accept(Player player, InventoryClickEvent event) {
+    public void accept(Player p, InventoryClickEvent event) {
         MissionType type = MissionManager.getType(mission.getType());
 
         if (type == null) return;
 
-        if (MissionManager.hasPlayerCompleted(player.getUniqueId(), mission)) {
-            player.sendMessage(ChatColor.RED + "You have already completed " + mission.getDisplayName() + "!");
+        if (MissionManager.hasPlayerCompleted(p.getUniqueId(), mission)) {
+            ALREADYCOMPLETED.msg(p, "%mission%", mission.getDisplayName());
             return;
         }
 
-        Result result = type.validate(player, mission.getParams(), mission);
+        Result result = type.validate(p, mission.getParams(), mission);
         if (result.asBoolean()) {
             if (mission.isDaily()) {
-                giveRewards(player);
+                giveRewards(p);
             } else {
                 ConfigurationSection rewards = MissionManager.getRewards();
 
@@ -44,26 +47,27 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
                 if (items != null && !items.isEmpty()) {
                     for (Object item : items) {
                         ItemStack reward = (ItemStack) item;
-                        InventoryUtil.giveItems(player, reward);
+                        InventoryUtil.giveItems(p, reward);
                     }
                 }
 
                 int xp = rewards.getInt("xp", 0);
-                if (xp > 0) player.giveExpLevels(xp);
+                if (xp > 0) p.giveExpLevels(xp);
 
                 List<String> list = rewards.getStringList("consoleCommands");
 
                 for (String s : list) {
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), s.replaceAll("%player%", player.getName())
-                            .replaceAll("%uuid%", player.getUniqueId().toString()));
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), s.replaceAll("%player%", p.getName())
+                            .replaceAll("%uuid%", p.getUniqueId().toString()));
                 }
             }
 
-            type.postComplete(player, mission.getParams());
-            MissionManager.completeMission(player.getUniqueId(), mission);
-            player.getOpenInventory().close();
+            type.postComplete(p, mission.getParams());
+            MissionManager.completeMission(p.getUniqueId(), mission);
+            checkAllThree(p);
+            p.getOpenInventory().close();
         } else {
-            if (result.getMessage() != null) player.sendMessage(result.getMessage());
+            if (result.getMessage() != null) p.sendMessage(result.getMessage());
         }
     }
 
@@ -112,6 +116,38 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
                     )
             );
         }
-        p.sendMessage(ChatColor.GOLD + "You have completed " + mission.getDisplayName() + "!");
+        COMPLETEMISSION.msg(p, "%mission%", mission.getDisplayName());
+    }
+
+    //If the player has completed all 3 missions for that day, then give them an additional bigger reward
+    private void checkAllThree(Player p) {
+        List<String> daily = DailyMissionManager.getCurrent();
+
+        for (String name : daily) {
+            Mission mission = MissionManager.getMissionFromName(name);
+            if (mission != null && !MissionManager.hasPlayerCompleted(p.getUniqueId(), mission)) {
+                return;
+            }
+        }
+
+        ConfigurationSection rewards = MissionManager.getRewards().getConfigurationSection("allthreecompleted");
+
+        if (rewards == null) {
+            return;
+        }
+
+        List<String> keys = new ArrayList<>(rewards.getKeys(false));
+        int num = keys.size();
+        String key = keys.get(ThreadLocalRandom.current().nextInt(num));
+
+        List<String> commands = rewards.getStringList(key);
+        commands.forEach(e ->
+                Bukkit.getServer().dispatchCommand(
+                        Bukkit.getServer().getConsoleSender(),
+                        e.replace("%player%", p.getName())
+                )
+        );
+
+        ALLTHREECOMPLETED.msg(p);
     }
 }

@@ -70,36 +70,52 @@ public class DamageType extends MissionType {
     @Override
     public int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
         File file = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "completed.yml");
-
-        YamlConfiguration conf;
-
-        if (!file.exists()) {
-            conf = new YamlConfiguration();
-        } else {
-            conf = YamlConfiguration.loadConfiguration(file);
-        }
-
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
-        calendar.set(Calendar.HOUR, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-
-        long timeInMillis = calendar.getTimeInMillis();
-
-        boolean doesCountExist = conf.contains(uuid.toString() + ".counters." + mission.getHandle());
-        boolean isTimeEnabled = conf.getLong(uuid.toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
+        List<Map<?, ?>> section = mission.getParams().getMapList("items");
         int currentCount = 0;
 
-        //Checks to see if there is an active counter within the last 24 hours
-        if ((!doesCountExist || !isTimeEnabled) && !MissionManager.hasPlayerCompleted(uuid, mission)) {
-            //Starts a new counter if there is not an active counter and the mission hasn't been completed
-            conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".count", currentCount);
-            conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".activated", System.currentTimeMillis());
+        for (Map<?, ?> s : section) {
+            Object type = s.getOrDefault("type", null);
+            if (type == null) continue;
+
+            if (type.toString().equals(countedThing)) {
+
+
+                YamlConfiguration conf;
+
+                if (!file.exists()) {
+                    conf = new YamlConfiguration();
+                } else {
+                    conf = YamlConfiguration.loadConfiguration(file);
+                }
+
+                Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
+                calendar.set(Calendar.HOUR, 0);
+                calendar.set(Calendar.MINUTE, 0);
+                calendar.set(Calendar.SECOND, 0);
+
+                long timeInMillis = calendar.getTimeInMillis();
+
+                boolean doesCountExist = conf.contains(uuid.toString() + ".counters." + mission.getHandle());
+                boolean isTimeEnabled = conf.getLong(uuid.toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
+
+                //Checks to see if there is an active counter within the last 24 hours
+                if (MissionManager.hasPlayerCompleted(uuid, mission)) {
+                    //Returns max value if already completed
+                    int amount = 1;
+                    Object obj = s.getOrDefault("amount", null);
+                    if (obj != null) amount = (Integer) obj;
+
+                    return amount;
+                } else if ((!doesCountExist || !isTimeEnabled) && !MissionManager.hasPlayerCompleted(uuid, mission)) {
+                    //Starts a new counter if there is not an active counter and the mission hasn't been completed
+                    conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".count", currentCount);
+                    conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".activated", System.currentTimeMillis());
+                } else {
+                    //Returns the existing counter
+                    currentCount = conf.getInt(uuid.toString() + ".counters." + mission.getHandle() + ".count");
+                }
+            }
         }
-
-        //Returns the existing counter
-        currentCount = conf.getInt(uuid.toString() + ".counters." + mission.getHandle() + ".count");
-
         return currentCount;
     }
 }
