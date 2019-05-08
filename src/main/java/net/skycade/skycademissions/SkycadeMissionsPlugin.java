@@ -2,6 +2,7 @@ package net.skycade.skycademissions;
 
 import net.skycade.SkycadeCore.SkycadePlugin;
 import net.skycade.skycademissions.command.MissionsCommand;
+import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.util.Messages;
 
 public class SkycadeMissionsPlugin extends SkycadePlugin {
@@ -20,9 +21,7 @@ public class SkycadeMissionsPlugin extends SkycadePlugin {
     public void onEnable() {
         super.onEnable();
 
-        registerListeners(
-                //here
-        );
+        MissionManager.load();
 
         Messages.init();
 

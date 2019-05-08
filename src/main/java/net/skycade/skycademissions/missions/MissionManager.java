@@ -25,6 +25,9 @@ import java.util.stream.Collectors;
 
 public class MissionManager {
 
+    private static YamlConfiguration yaml;
+    private static File file;
+
     private static SkycadeMissionsPlugin plugin = SkycadeMissionsPlugin.getInstance();
 
     private static Map<Type, MissionType> types = new HashMap<>();
@@ -60,54 +63,59 @@ public class MissionManager {
             });
 
     public static void load() {
-        File file = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "missions.yml");
+        file = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "missions.yml");
 
-        if (!file.exists())
-            plugin.saveResource("missions.yml", false);
-
-        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        if (!file.exists()) {
+            yaml = new YamlConfiguration();
+            save();
+        } else {
+            yaml = YamlConfiguration.loadConfiguration(file);
+            save();
+        }
 
         ConfigurationSection main = yaml.getConfigurationSection("missions");
         rewards = yaml.getConfigurationSection("rewards");
 
-        for (String handle : main.getKeys(false)) {
-            try {
-                ConfigurationSection mission = main.getConfigurationSection(handle);
-
-                String typeString = mission.getString("type").toUpperCase();
-                Type type;
+        if (main != null) {
+            for (String handle : main.getKeys(false)) {
                 try {
-                    type = Type.valueOf(typeString);
-                } catch (IllegalArgumentException e) {
-                    // todo log to console
-                    continue;
+                    ConfigurationSection mission = main.getConfigurationSection(handle);
+
+                    String typeString = mission.getString("type").toUpperCase();
+                    Type type;
+                    try {
+                        type = Type.valueOf(typeString);
+                    } catch (IllegalArgumentException e) {
+                        // todo log to console
+                        continue;
+                    }
+
+                    String requiredLevelString = mission.getString("requiredlevel", "EASY").toUpperCase();
+                    MissionLevel level; // todo
+                    try {
+                        level = MissionLevel.valueOf(requiredLevelString);
+                    } catch (IllegalArgumentException e) {
+                        // todo
+                        continue;
+                    }
+
+                    ConfigurationSection params = mission.getConfigurationSection("params");
+
+                    String displayName = mission.getString("displayname");
+                    String icon = mission.getString("icon");
+                    boolean isDaily = mission.getBoolean("dailymission");
+
+                    List<String> lore = mission.getStringList("description").stream()
+                            .map(e -> ChatColor.translateAlternateColorCodes('&', e))
+                            .collect(Collectors.toList());
+
+                    int position = mission.getInt("position");
+                    long expiry = mission.getLong("expiry");
+
+                    missions.add(new Mission(isDaily, type, handle, displayName, params, level, icon, lore, position, expiry));
+                } catch (Exception e) {
+                    plugin.getLogger().log(Level.WARNING, "Couldn't load mission '" + handle + "'", e);
                 }
-
-                String requiredLevelString = mission.getString("requiredlevel", "EASY").toUpperCase();
-                MissionLevel level; // todo
-                try {
-                    level = MissionLevel.valueOf(requiredLevelString);
-                } catch (IllegalArgumentException e) {
-                    // todo
-                    continue;
-                }
-
-                ConfigurationSection params = mission.getConfigurationSection("params");
-
-                String displayName = mission.getString("displayname");
-                String icon = mission.getString("icon");
-                boolean isDaily = mission.getBoolean("dailymission");
-
-                List<String> lore = mission.getStringList("description").stream()
-                        .map(e -> ChatColor.translateAlternateColorCodes('&', e))
-                        .collect(Collectors.toList());
-
-                int position = mission.getInt("position");
-                long expiry = mission.getLong("expiry");
-
-                missions.add(new Mission(isDaily, type, handle, displayName, params, level, icon, lore, position, expiry));
-            } catch (Exception e) {
-                plugin.getLogger().log(Level.WARNING, "Couldn't load challenge '" + handle + "'", e);
             }
         }
 
@@ -119,6 +127,14 @@ public class MissionManager {
         new KillType();
 
         Bukkit.getPluginManager().registerEvents(new TypesListener(), plugin);
+    }
+
+    private static void save() {
+        try {
+            yaml.save(file);
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.SEVERE, "Couldn't save missions yaml file.", e);
+        }
     }
 
     public static void openGui(Player player) {
