@@ -73,6 +73,8 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
     private void giveRewards(Player p) {
         ConfigurationSection rewards = MissionManager.getRewards();
 
+        COMPLETEMISSION.msg(p, "%mission%", mission.getDisplayName());
+
         if (mission.getLevel() == MissionLevel.EASY){
             ConfigurationSection easyRewards = rewards.getConfigurationSection("easy");
             List<String> keys = new ArrayList<>(easyRewards.getKeys(false));
@@ -80,12 +82,14 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
             String key = keys.get(ThreadLocalRandom.current().nextInt(num));
 
             List<String> commands = easyRewards.getConfigurationSection(key).getStringList("commands");
-            commands.forEach(e ->
-                    Bukkit.getServer().dispatchCommand(
-                            Bukkit.getServer().getConsoleSender(),
-                            e.replace("%player%", p.getName())
-                    )
-            );
+            commands.forEach(e -> {
+                Bukkit.getServer().dispatchCommand(
+                        Bukkit.getServer().getConsoleSender(),
+                        e.replace("%player%", p.getName())
+                );
+                List<String> names = easyRewards.getConfigurationSection(key).getStringList("names");
+                REWARDWON.msg(p, "%reward%", names.toString().replace("[","").replace("]",""));
+            });
         }
         else if (mission.getLevel() == MissionLevel.MEDIUM){
             ConfigurationSection mediumRewards = rewards.getConfigurationSection("medium");
@@ -94,12 +98,14 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
             String key = keys.get(ThreadLocalRandom.current().nextInt(num));
 
             List<String> commands = mediumRewards.getConfigurationSection(key).getStringList("commands");
-            commands.forEach(e ->
-                    Bukkit.getServer().dispatchCommand(
-                            Bukkit.getServer().getConsoleSender(),
-                            e.replace("%player%", p.getName())
-                    )
-            );
+            commands.forEach(e -> {
+                Bukkit.getServer().dispatchCommand(
+                        Bukkit.getServer().getConsoleSender(),
+                        e.replace("%player%", p.getName())
+                );
+                List<String> names = mediumRewards.getConfigurationSection(key).getStringList("names");
+                REWARDWON.msg(p, "%reward%", names.toString().replace("[","").replace("]",""));
+            });
         }
         else if (mission.getLevel() == MissionLevel.HARD){
             ConfigurationSection hardRewards = rewards.getConfigurationSection("hard");
@@ -108,14 +114,15 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
             String key = keys.get(ThreadLocalRandom.current().nextInt(num));
 
             List<String> commands = hardRewards.getConfigurationSection(key).getStringList("commands");
-            commands.forEach(e ->
-                    Bukkit.getServer().dispatchCommand(
-                            Bukkit.getServer().getConsoleSender(),
-                            e.replace("%player%", p.getName())
-                    )
-            );
+            commands.forEach(e -> {
+                Bukkit.getServer().dispatchCommand(
+                        Bukkit.getServer().getConsoleSender(),
+                        e.replace("%player%", p.getName())
+                );
+                List<String> names = hardRewards.getConfigurationSection(key).getStringList("names");
+                REWARDWON.msg(p, "%reward%", names.toString().replace("[","").replace("]",""));
+            });
         }
-        COMPLETEMISSION.msg(p, "%mission%", mission.getDisplayName());
     }
 
     //If the player has completed all 3 missions for that day, then give them an additional bigger reward
@@ -140,13 +147,13 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
         String key = keys.get(ThreadLocalRandom.current().nextInt(num));
 
         List<String> commands = rewards.getConfigurationSection(key).getStringList("commands");
-        commands.forEach(e ->
-                Bukkit.getServer().dispatchCommand(
-                        Bukkit.getServer().getConsoleSender(),
-                        e.replace("%player%", p.getName())
-                )
-        );
-
-        ALLTHREECOMPLETED.msg(p);
+        commands.forEach(e -> {
+            Bukkit.getServer().dispatchCommand(
+                    Bukkit.getServer().getConsoleSender(),
+                    e.replace("%player%", p.getName())
+            );
+            List<String> names = rewards.getConfigurationSection(key).getStringList("names");
+            ALLTHREECOMPLETED.msg(p, "%reward%", names.toString().replace("[","").replace("]",""));
+        });
     }
 }

@@ -11,6 +11,8 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static net.skycade.skycademissions.util.Messages.NEWDAILYMISSIONS;
+
 public class DailyMissionManager extends BukkitRunnable {
 
     private static List<String> current = new ArrayList<>();
@@ -28,7 +30,6 @@ public class DailyMissionManager extends BukkitRunnable {
 
     @Override
     public void run() {
-
         File file = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "daily.yml");
 
         if (lastGenerated == 0L) {
@@ -46,7 +47,7 @@ public class DailyMissionManager extends BukkitRunnable {
         cal.set(Calendar.SECOND, 0);
 
         long today = cal.getTimeInMillis();
-        if (lastGenerated < today) {
+        if (lastGenerated + 86400000 < today) {
             // generate, persist
             List<Mission> daily = MissionManager.getAllDaily();
             current.clear();
@@ -70,6 +71,8 @@ public class DailyMissionManager extends BukkitRunnable {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+
+            NEWDAILYMISSIONS.broadcast();
         }
     }
 

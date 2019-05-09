@@ -90,16 +90,16 @@ public class MissionManager implements Listener {
                     try {
                         type = Type.valueOf(typeString);
                     } catch (IllegalArgumentException e) {
-                        // todo log to console
+                        plugin.getLogger().log(Level.WARNING, "Unknown MissionType for '" + handle + "'", e);
                         continue;
                     }
 
-                    String requiredLevelString = mission.getString("requiredlevel", "EASY").toUpperCase();
-                    MissionLevel level; // todo
+                    String missionLevel = mission.getString("level", "EASY").toUpperCase();
+                    MissionLevel level;
                     try {
-                        level = MissionLevel.valueOf(requiredLevelString);
+                        level = MissionLevel.valueOf(missionLevel);
                     } catch (IllegalArgumentException e) {
-                        // todo
+                        plugin.getLogger().log(Level.WARNING, "Unknown MissionLevel for '" + handle + "'", e);
                         continue;
                     }
 
@@ -129,6 +129,7 @@ public class MissionManager implements Listener {
         new InventoryType();
         new DamageType();
         new KillType();
+        new MiningType();
 
         Bukkit.getPluginManager().registerEvents(new TypesListener(), plugin);
     }
@@ -266,20 +267,20 @@ public class MissionManager implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onInventoryClick(InventoryClickEvent e) {
-        if (e.getClickedInventory() == null || e.getCurrentItem() == null) return;
+        if (e.getClickedInventory() == null) return;
 
 
 
-        if (e.getClickedInventory().getName().equals("§c§lMissions") && e.getCurrentItem().getItemMeta().getDisplayName().contains("Rewards")) {
+        if (e.getClickedInventory().getName().equals("§c§lMissions") && e.getSlot() == 26) {
             openRewardsGUI((Player) e.getWhoClicked());
-        } else if (e.getClickedInventory().getName().equals("§c§lRewards") && e.getCurrentItem().getItemMeta().getDisplayName().contains("Go Back")) {
+        } else if (e.getClickedInventory().getName().equals("§c§lRewards") && e.getSlot() == 26) {
             openMissionGui((Player) e.getWhoClicked());
         } else if (e.getClickedInventory().getName().equals("§c§lRewards")){
             e.setCancelled(true);
         }
     }
 
-    public static void addCounter(UUID uuid, Mission mission, int count) {
+    public static void addCounter(UUID uuid, Mission mission, String path, int count) {
         File file = new File(plugin.getDataFolder(), "completed.yml");
 
         YamlConfiguration conf;
@@ -303,11 +304,11 @@ public class MissionManager implements Listener {
         //Checks to see if there is an active counter within the last 24 hours
         if ((!doesCountExist || !isTimeEnabled) && !hasPlayerCompleted(uuid, mission)) {
             //Starts a new counter if there is not an active counter and the mission hasn't been completed
-            conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".count", count);
+            conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + path, count);
             conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".activated", System.currentTimeMillis());
         } else if (!hasPlayerCompleted(uuid, mission)){
             //Increments the existing counter as long as the mission hasn't been completed
-            conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".count", count);
+            conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + path, count);
         }
 
         try {

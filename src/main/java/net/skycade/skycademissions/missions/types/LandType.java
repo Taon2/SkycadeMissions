@@ -20,11 +20,12 @@ import java.util.Map;
 import java.util.UUID;
 
 public class LandType extends MissionType {
+
     private static final Localization.Message MISSING_ITEM = new Localization.Message("missing-item", "&cYou are missing %val% %item%!");
 
     public LandType() {
         super();
-        Localization.getInstance().registerMessages("skycade.factions.missions.level",
+        Localization.getInstance().registerMessages("skycade.factions.missions.land",
                 MISSING_ITEM
         );
     }
@@ -92,6 +93,10 @@ public class LandType extends MissionType {
         if (!neededItem.isEmpty()) {
             for (Material missing : neededItem.keySet()) {
                 player.sendMessage(ChatColor.RED +  "You are missing: " + neededItem.get(missing) + " x " + missing.toString() + "!");
+                player.sendMessage(MISSING_ITEM.getMessage(player)
+                        .replaceAll("%val%", (neededItem.get(missing)) + "")
+                        .replaceAll("%item%", missing.toString())
+                );
             }
             return new Result(Result.Type.FAILURE);
         } else {
@@ -108,7 +113,10 @@ public class LandType extends MissionType {
                 return new Result(Result.Type.SUCCESS);
             } else {
                 for (EntityType missing : neededEntities.keySet()) {
-                    player.sendMessage(ChatColor.RED + "You are missing: " + neededEntities.get(missing) + " x " + missing.toString() + "!");
+                    player.sendMessage(MISSING_ITEM.getMessage(player)
+                            .replaceAll("%val%", (neededEntities.get(missing)) + "")
+                            .replaceAll("%item%", missing.toString())
+                    );
                 }
                 return new Result(Result.Type.FAILURE);
             }

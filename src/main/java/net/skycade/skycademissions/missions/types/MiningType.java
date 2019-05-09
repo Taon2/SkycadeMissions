@@ -12,14 +12,14 @@ import org.bukkit.entity.Player;
 import java.io.File;
 import java.util.*;
 
-public class DamageType extends MissionType {
+public class MiningType extends MissionType {
 
-    private static final Localization.Message NOT_ENOUGH_DAMAGE = new Localization.Message("not-enough-damage", "&cYou are need to deal %val% more damage to %type%!");
+    private static final Localization.Message NOT_ENOUGH_BLOCKS = new Localization.Message("not-enough-blocks", "&cYou are need to mine %val% more %type%!");
 
-    public DamageType() {
+    public MiningType() {
         super();
-        Localization.getInstance().registerMessages("skycade.factions.missions.damage",
-                NOT_ENOUGH_DAMAGE
+        Localization.getInstance().registerMessages("skycade.factions.missions.mining",
+                NOT_ENOUGH_BLOCKS
         );
     }
 
@@ -47,7 +47,7 @@ public class DamageType extends MissionType {
             int current  = getCurrentCount(player.getUniqueId(), miss, type.toString());
             if (current < amount) {
                 hasFailed = true;
-                player.sendMessage(NOT_ENOUGH_DAMAGE.getMessage(player)
+                player.sendMessage(NOT_ENOUGH_BLOCKS.getMessage(player)
                         .replaceAll("%val%", (amount - current) + "")
                         .replaceAll("%type%", type.toString())
                 );
@@ -62,7 +62,7 @@ public class DamageType extends MissionType {
 
     @Override
     public Type getType() {
-        return Type.DAMAGE;
+        return Type.MINING;
     }
 
     @Override

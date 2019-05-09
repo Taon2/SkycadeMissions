@@ -40,12 +40,7 @@ public class InventoryType extends MissionType {
             Object type = s.getOrDefault("type", null);
             if (type == null) continue;
 
-            Material material;
-            try {
-                material = Material.valueOf(((String) type).toUpperCase());
-            } catch (IllegalArgumentException e) {
-                continue; // todo warn console
-            }
+            Material material = Material.valueOf(((String) type).toUpperCase());
 
             int amount = 1;
             Object obj = s.getOrDefault("amount", null);
@@ -67,13 +62,13 @@ public class InventoryType extends MissionType {
                 if (finalDurability == null){
                     player.sendMessage(MISSING_ITEM.getMessage(player)
                             .replaceAll("%val%", (amount - sum) + "")
-                            .replaceAll("%item%", material.name().toLowerCase().replaceAll("_", " "))
+                            .replaceAll("%item%", material.toString())
                     );
                 }
                 else{
                     player.sendMessage(MISSING_ITEM.getMessage(player)
                             .replaceAll("%val%", (amount - sum) + "")
-                            .replaceAll("%item%", material.name().toLowerCase().replaceAll("_", " ") + ":" + finalDurability)
+                            .replaceAll("%item%", material.toString() + ":" + finalDurability)
                     );
                 }
             }
@@ -149,12 +144,7 @@ public class InventoryType extends MissionType {
 
             if (type.toString().equals(countedThing)) {
 
-                Material material;
-                try {
-                    material = Material.valueOf(type.toString().toUpperCase());
-                } catch (IllegalArgumentException e) {
-                    continue; // todo warn console
-                }
+                Material material = Material.valueOf(type.toString().toUpperCase());
 
                 int amount = 1;
                 Object obj = s.getOrDefault("amount", null);

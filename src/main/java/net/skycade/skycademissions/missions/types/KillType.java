@@ -7,7 +7,6 @@ import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.missions.Result;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 import java.io.File;
@@ -15,14 +14,11 @@ import java.util.*;
 
 public class KillType extends MissionType {
 
-    private EntityType entityType;
-    private Mission mission;
-
     private static final Localization.Message NOT_ENOUGH_KILLS = new Localization.Message("not-enough-kills", "&cYou are need to kill %val% more %type%!");
 
     public KillType() {
         super();
-        Localization.getInstance().registerMessages("skycade.factions.missions.inventory",
+        Localization.getInstance().registerMessages("skycade.factions.missions.kills",
                 NOT_ENOUGH_KILLS
         );
     }
@@ -36,7 +32,6 @@ public class KillType extends MissionType {
     public Result validate(Player player, ConfigurationSection params, Mission miss) {
 
         boolean hasFailed = false;
-        mission = miss;
 
         List<Map<?, ?>> section = params.getMapList("items");
 
@@ -44,18 +39,17 @@ public class KillType extends MissionType {
 
             Object type = s.getOrDefault("type", null);
             if (type == null) continue;
-            entityType = EntityType.valueOf(type.toString());
 
             int amount = 1;
             Object obj = s.getOrDefault("amount", null);
             if (obj != null) amount = (Integer) obj;
 
-            int current  = getCurrentCount(player.getUniqueId(), mission, type.toString());
+            int current  = getCurrentCount(player.getUniqueId(), miss, type.toString());
             if (current < amount) {
                 hasFailed = true;
                 player.sendMessage(NOT_ENOUGH_KILLS.getMessage(player)
                         .replaceAll("%val%", (amount - current) + "")
-                        .replaceAll("%type%", entityType.name().toLowerCase().replaceAll("_", " "))
+                        .replaceAll("%type%", type.toString())
                 );
             }
         }
@@ -78,46 +72,39 @@ public class KillType extends MissionType {
         int currentCount = 0;
 
         for (Map<?, ?> s : section) {
-            Object type = s.getOrDefault("type", null);
-            if (type == null) continue;
+            YamlConfiguration conf;
 
-            if (type.toString().equals(countedThing)) {
+            if (!file.exists()) {
+                conf = new YamlConfiguration();
+            } else {
+                conf = YamlConfiguration.loadConfiguration(file);
+            }
 
+            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
+            calendar.set(Calendar.HOUR, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
 
-                YamlConfiguration conf;
+            long timeInMillis = calendar.getTimeInMillis();
 
-                if (!file.exists()) {
-                    conf = new YamlConfiguration();
-                } else {
-                    conf = YamlConfiguration.loadConfiguration(file);
-                }
+            boolean doesCountExist = conf.contains(uuid.toString() + ".counters." + mission.getHandle());
+            boolean isTimeEnabled = conf.getLong(uuid.toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
 
-                Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
-                calendar.set(Calendar.HOUR, 0);
-                calendar.set(Calendar.MINUTE, 0);
-                calendar.set(Calendar.SECOND, 0);
+            //Checks to see if there is an active counter within the last 24 hours
+            if (MissionManager.hasPlayerCompleted(uuid, mission)) {
+                //Returns max value if already completed
+                int amount = 1;
+                Object obj = s.getOrDefault("amount", null);
+                if (obj != null) amount = (Integer) obj;
 
-                long timeInMillis = calendar.getTimeInMillis();
-
-                boolean doesCountExist = conf.contains(uuid.toString() + ".counters." + mission.getHandle());
-                boolean isTimeEnabled = conf.getLong(uuid.toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
-
-                //Checks to see if there is an active counter within the last 24 hours
-                if (MissionManager.hasPlayerCompleted(uuid, mission)) {
-                    //Returns max value if already completed
-                    int amount = 1;
-                    Object obj = s.getOrDefault("amount", null);
-                    if (obj != null) amount = (Integer) obj;
-
-                    return amount;
-                } else if ((!doesCountExist || !isTimeEnabled) && !MissionManager.hasPlayerCompleted(uuid, mission)) {
-                    //Starts a new counter if there is not an active counter and the mission hasn't been completed
-                    conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".count", currentCount);
-                    conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".activated", System.currentTimeMillis());
-                } else {
-                    //Returns the existing counter
-                    currentCount = conf.getInt(uuid.toString() + ".counters." + mission.getHandle() + ".count");
-                }
+                return amount;
+            } else if ((!doesCountExist || !isTimeEnabled) && !MissionManager.hasPlayerCompleted(uuid, mission)) {
+                //Starts a new counter if there is not an active counter and the mission hasn't been completed
+                conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + countedThing, currentCount);
+                conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".activated", System.currentTimeMillis());
+            } else {
+                //Returns the existing counter
+                currentCount = conf.getInt(uuid.toString() + ".counters." + mission.getHandle() + "." + countedThing);
             }
         }
         return currentCount;

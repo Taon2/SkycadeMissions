@@ -31,13 +31,13 @@ public class Mission {
     }
 
     Mission(Boolean isDaily, Type type, String handle, String displayName, ConfigurationSection params,
-            MissionLevel requiredLevel, String icon, List<String> lore, int position, long expiry) {
+            MissionLevel level, String icon, List<String> lore, int position, long expiry) {
         this.isDaily = isDaily;
         this.type = type;
         this.handle = handle;
         this.displayName = displayName == null ? null : ChatColor.translateAlternateColorCodes('&', displayName);
         this.params = params;
-        this.level = requiredLevel;
+        this.level = level;
         if (icon.contains(":")) {
             this.icon = Material.valueOf(icon);
             int colonLocation = icon.indexOf(":");
