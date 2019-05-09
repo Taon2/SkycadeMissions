@@ -2,9 +2,7 @@ package net.skycade.skycademissions.missions;
 
 import net.skycade.SkycadeCore.utility.command.InventoryUtil;
 import net.skycade.skycademissions.missions.types.MissionType;
-import net.skycade.skycademissions.util.Messages;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -41,6 +39,7 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
             if (mission.isDaily()) {
                 giveRewards(p);
             } else {
+
                 ConfigurationSection rewards = MissionManager.getRewards();
 
                 List<?> items = rewards.getList("items");
@@ -80,7 +79,7 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
             int num = keys.size();
             String key = keys.get(ThreadLocalRandom.current().nextInt(num));
 
-            List<String> commands = easyRewards.getStringList(key);
+            List<String> commands = easyRewards.getConfigurationSection(key).getStringList("commands");
             commands.forEach(e ->
                     Bukkit.getServer().dispatchCommand(
                             Bukkit.getServer().getConsoleSender(),
@@ -94,7 +93,7 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
             int num = keys.size();
             String key = keys.get(ThreadLocalRandom.current().nextInt(num));
 
-            List<String> commands = mediumRewards.getStringList(key);
+            List<String> commands = mediumRewards.getConfigurationSection(key).getStringList("commands");
             commands.forEach(e ->
                     Bukkit.getServer().dispatchCommand(
                             Bukkit.getServer().getConsoleSender(),
@@ -108,7 +107,7 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
             int num = keys.size();
             String key = keys.get(ThreadLocalRandom.current().nextInt(num));
 
-            List<String> commands = hardRewards.getStringList(key);
+            List<String> commands = hardRewards.getConfigurationSection(key).getStringList("commands");
             commands.forEach(e ->
                     Bukkit.getServer().dispatchCommand(
                             Bukkit.getServer().getConsoleSender(),
@@ -140,7 +139,7 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
         int num = keys.size();
         String key = keys.get(ThreadLocalRandom.current().nextInt(num));
 
-        List<String> commands = rewards.getStringList(key);
+        List<String> commands = rewards.getConfigurationSection(key).getStringList("commands");
         commands.forEach(e ->
                 Bukkit.getServer().dispatchCommand(
                         Bukkit.getServer().getConsoleSender(),

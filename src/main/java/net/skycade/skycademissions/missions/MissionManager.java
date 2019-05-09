@@ -14,6 +14,10 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 
@@ -23,7 +27,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-public class MissionManager {
+public class MissionManager implements Listener {
 
     private static YamlConfiguration yaml;
     private static File file;
@@ -137,12 +141,12 @@ public class MissionManager {
         }
     }
 
-    public static void openGui(Player player) {
-        openGui(player, 1);
+    public static void openMissionGui(Player player) {
+        openMissionGui(player, 1);
     }
 
-    private static void openGui(Player player, int page) {
-        DynamicGui gui = new DynamicGui(ChatColor.translateAlternateColorCodes('&', "&c&lMissions"), 3);
+    private static void openMissionGui(Player player, int page) {
+        DynamicGui missionsGui = new DynamicGui(ChatColor.translateAlternateColorCodes('&', "&c&lMissions"), 3);
 
         int x = 0;
 
@@ -160,7 +164,7 @@ public class MissionManager {
             ItemStack item;
 
             List<Map<?, ?>> section = mission.getParams().getMapList("items");
-            String currentCount = "";
+            String currentCount;
             ArrayList<String> countingLore = new ArrayList<>();
 
             for (Map<?, ?> s : section) {
@@ -205,19 +209,74 @@ public class MissionManager {
                 item = b.build();
             }
 
-            gui.setItemInteraction(guiSlot, item, new MissionVerifyAction(mission));
+            missionsGui.setItemInteraction(guiSlot, item, new MissionVerifyAction(mission));
             guiSlot += 2;
         }
 
-        gui.open(player);
+        ItemBuilder rewardsItem = new ItemBuilder(new ItemStack(Material.NETHER_STAR, 1))
+                .setDisplayName(ChatColor.GOLD + "" + ChatColor.BOLD + "Rewards")
+                .setLore("Displays the rewards possible to win.");
+        missionsGui.setItem(26, rewardsItem.build());
+
+        missionsGui.open(player);
     }
 
-    public static MissionType getType(Type type) {
-        return types.getOrDefault(type, null);
+    private static void openRewardsGUI(Player player) {
+        DynamicGui rewardsGui = new DynamicGui(ChatColor.translateAlternateColorCodes('&', "&c&lRewards"), 3);
+
+        ConfigurationSection rewards = MissionManager.getRewards();
+
+        if (rewards.getKeys(false).size() <= 0) return;
+
+        int guiSlot = 10;
+        for (String typeKey : rewards.getKeys(false)) {
+            ItemStack item;
+            ArrayList <String> lore = new ArrayList<>();
+
+            for (String rewardKey : rewards.getConfigurationSection(typeKey).getKeys(false)) {
+                List<String> rewardNames = rewards.getConfigurationSection(typeKey).getStringList(rewardKey + ".names").stream()
+                        .map(e -> ChatColor.translateAlternateColorCodes('&', e))
+                        .collect(Collectors.toList());
+                lore.addAll(rewardNames);
+                lore.add(ChatColor.GOLD + "-");
+            }
+
+            //Sets the name for allthreecompleted section to a nicer looking name
+            if (typeKey.equals("allthreecompleted")){
+                typeKey = "ALL THREE";
+            }
+
+            ItemBuilder b = new ItemBuilder(new ItemStack(Material.NETHER_STAR, 1))
+                    .setDisplayName(ChatColor.RED + "" + ChatColor.BOLD + typeKey.toUpperCase() + " Rewards")
+                    .setLore(lore);
+
+            item = b.build();
+
+            rewardsGui.setItem(guiSlot, item);
+            guiSlot += 2;
+        }
+
+        ItemBuilder backItem = new ItemBuilder(new ItemStack(Material.ARROW, 1))
+                .setDisplayName(ChatColor.GOLD + "" + ChatColor.BOLD + "Go Back")
+                .setLore("Return to the Missions GUI.");
+        rewardsGui.setItem(26, backItem.build());
+
+        rewardsGui.open(player);
     }
 
-    static ConfigurationSection getRewards() {
-        return rewards;
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onInventoryClick(InventoryClickEvent e) {
+        if (e.getClickedInventory() == null || e.getCurrentItem() == null) return;
+
+
+
+        if (e.getClickedInventory().getName().equals("§c§lMissions") && e.getCurrentItem().getItemMeta().getDisplayName().contains("Rewards")) {
+            openRewardsGUI((Player) e.getWhoClicked());
+        } else if (e.getClickedInventory().getName().equals("§c§lRewards") && e.getCurrentItem().getItemMeta().getDisplayName().contains("Go Back")) {
+            openMissionGui((Player) e.getWhoClicked());
+        } else if (e.getClickedInventory().getName().equals("§c§lRewards")){
+            e.setCancelled(true);
+        }
     }
 
     public static void addCounter(UUID uuid, Mission mission, int count) {
@@ -270,7 +329,7 @@ public class MissionManager {
         } else {
             conf = YamlConfiguration.loadConfiguration(file);
         }
-        conf.set(uuid.toString() + "." + "counters", null);
+        conf.set(uuid.toString() + "." + "counters" + mission.getHandle(), null);
         conf.set(uuid.toString() + "." + mission.getHandle(), System.currentTimeMillis());
 
         try {
@@ -299,6 +358,14 @@ public class MissionManager {
         } else {
             return true;
         }
+    }
+
+    public static MissionType getType(Type type) {
+        return types.getOrDefault(type, null);
+    }
+
+    static ConfigurationSection getRewards() {
+        return rewards;
     }
 
     static List<Mission> getAllDaily() {

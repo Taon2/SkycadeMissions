@@ -19,6 +19,6 @@ public class MissionsCommand extends SkycadeCommand {
         if (player.getUniqueId() == null) {
             return;
         }
-        MissionManager.openGui(player);
+        MissionManager.openMissionGui(player);
     }
 }
