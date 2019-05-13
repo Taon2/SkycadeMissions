@@ -1,6 +1,7 @@
 package net.skycade.skycademissions.missions;
 
 import net.skycade.skycademissions.SkycadeMissionsPlugin;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -42,9 +43,9 @@ public class DailyMissionManager extends BukkitRunnable {
 
 
         Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.HOUR, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
+//        cal.set(Calendar.HOUR, 0);
+//        cal.set(Calendar.MINUTE, 0);
+//        cal.set(Calendar.SECOND, 0);
 
         long today = cal.getTimeInMillis();
         if (lastGenerated + 86400000 < today) {
@@ -64,6 +65,7 @@ public class DailyMissionManager extends BukkitRunnable {
 
             YamlConfiguration config = new YamlConfiguration();
             config.set("generatedOn", System.currentTimeMillis());
+            lastGenerated = System.currentTimeMillis();
             config.set("current", current);
 
             try {
@@ -73,6 +75,7 @@ public class DailyMissionManager extends BukkitRunnable {
             }
 
             NEWDAILYMISSIONS.broadcast();
+            Bukkit.getLogger().info(NEWDAILYMISSIONS.toString());
         }
     }
 
