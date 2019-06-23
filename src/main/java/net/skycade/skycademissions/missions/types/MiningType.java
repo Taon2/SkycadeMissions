@@ -14,7 +14,7 @@ import java.util.*;
 
 public class MiningType extends MissionType {
 
-    private static final Localization.Message NOT_ENOUGH_BLOCKS = new Localization.Message("not-enough-blocks", "&cYou are need to mine %val% more %type%!");
+    private static final Localization.Message NOT_ENOUGH_BLOCKS = new Localization.Message("not-enough-blocks", "&cYou need to mine %val% more %type%!");
 
     public MiningType() {
         super();

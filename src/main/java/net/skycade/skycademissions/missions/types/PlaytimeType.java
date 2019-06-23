@@ -12,14 +12,14 @@ import org.bukkit.entity.Player;
 import java.io.File;
 import java.util.*;
 
-public class DamageType extends MissionType {
+public class PlaytimeType extends MissionType {
 
-    private static final Localization.Message NOT_ENOUGH_DAMAGE = new Localization.Message("not-enough-damage", "&cYou need to deal %val% more damage to %type%!");
+    private static final Localization.Message NOT_ENOUGH_PLAYTIME = new Localization.Message("not-enough-playtime", "&cYou need to play for %val% more %time%!");
 
-    public DamageType() {
+    public PlaytimeType() {
         super();
-        Localization.getInstance().registerMessages("skycade.factions.missions.damage",
-                NOT_ENOUGH_DAMAGE
+        Localization.getInstance().registerMessages("skycade.prisons.missions.playtime",
+                NOT_ENOUGH_PLAYTIME
         );
     }
 
@@ -45,11 +45,11 @@ public class DamageType extends MissionType {
             if (obj != null) amount = (Integer) obj;
 
             int current  = getCurrentCount(player.getUniqueId(), miss, type.toString());
-            if (current < amount) {
+            if (current < amount*3600000) {
                 hasFailed = true;
-                player.sendMessage(NOT_ENOUGH_DAMAGE.getMessage(player)
+                player.sendMessage(NOT_ENOUGH_PLAYTIME.getMessage(player)
                         .replaceAll("%val%", (amount - current) + "")
-                        .replaceAll("%type%", type.toString())
+                        .replaceAll("%time%", type.toString().toLowerCase() + "")
                 );
             }
         }
@@ -62,14 +62,18 @@ public class DamageType extends MissionType {
 
     @Override
     public Type getType() {
-        return Type.DAMAGE;
+        return Type.PLAYTIME;
     }
 
     @Override
     public int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
+        return (int) (getCurrentLongCount(uuid, mission, countedThing)/3600000);
+    }
+
+    private long getCurrentLongCount(UUID uuid, Mission mission, String countedThing) {
         File file = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "completed.yml");
         List<Map<?, ?>> section = mission.getParams().getMapList("items");
-        int currentCount = 0;
+        long currentCount = 0;
 
         for (Map<?, ?> s : section) {
             YamlConfiguration conf;
@@ -93,9 +97,9 @@ public class DamageType extends MissionType {
             //Checks to see if there is an active counter within the last 24 hours
             if (MissionManager.hasPlayerCompleted(uuid, mission)) {
                 //Returns max value if already completed
-                int amount = 1;
+                long amount = 1;
                 Object obj = s.getOrDefault("amount", null);
-                if (obj != null) amount = (Integer) obj;
+                if (obj != null) amount = (Long) obj*3600000;
 
                 return amount;
             } else if ((!doesCountExist || !isTimeEnabled) && !MissionManager.hasPlayerCompleted(uuid, mission)) {
@@ -104,7 +108,7 @@ public class DamageType extends MissionType {
                 conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".activated", System.currentTimeMillis());
             } else {
                 //Returns the existing counter
-                currentCount = conf.getInt(uuid.toString() + ".counters." + mission.getHandle() + "." + countedThing);
+                currentCount = conf.getLong(uuid.toString() + ".counters." + mission.getHandle() + "." + countedThing);
             }
         }
         return currentCount;

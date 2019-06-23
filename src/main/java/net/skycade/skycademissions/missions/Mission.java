@@ -39,7 +39,7 @@ public class Mission {
         this.params = params;
         this.level = level;
         if (icon.contains(":")) {
-            this.icon = Material.valueOf(icon);
+            this.icon = Material.valueOf(icon.substring(0, icon.indexOf(":")));
             int colonLocation = icon.indexOf(":");
 
             this.durability = Short.parseShort(icon.substring((colonLocation+1)));

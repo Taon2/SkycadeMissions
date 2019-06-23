@@ -12,14 +12,14 @@ import org.bukkit.entity.Player;
 import java.io.File;
 import java.util.*;
 
-public class DamageType extends MissionType {
+public class FishingType extends MissionType {
 
-    private static final Localization.Message NOT_ENOUGH_DAMAGE = new Localization.Message("not-enough-damage", "&cYou need to deal %val% more damage to %type%!");
+    private static final Localization.Message NOT_ENOUGH_FISH = new Localization.Message("not-enough-fish", "&cYou need to fish %val% more %type%!");
 
-    public DamageType() {
+    public FishingType() {
         super();
-        Localization.getInstance().registerMessages("skycade.factions.missions.damage",
-                NOT_ENOUGH_DAMAGE
+        Localization.getInstance().registerMessages("skycade.factions.missions.fishing",
+                NOT_ENOUGH_FISH
         );
     }
 
@@ -44,10 +44,14 @@ public class DamageType extends MissionType {
             Object obj = s.getOrDefault("amount", null);
             if (obj != null) amount = (Integer) obj;
 
-            int current  = getCurrentCount(player.getUniqueId(), miss, type.toString());
+            short durability = 0;
+            obj = s.getOrDefault("durability", null);
+            if (obj != null) durability = ((Integer) obj).shortValue();
+
+            int current  = getCurrentCount(player.getUniqueId(), miss, type.toString() +  ":" + durability);
             if (current < amount) {
                 hasFailed = true;
-                player.sendMessage(NOT_ENOUGH_DAMAGE.getMessage(player)
+                player.sendMessage(NOT_ENOUGH_FISH.getMessage(player)
                         .replaceAll("%val%", (amount - current) + "")
                         .replaceAll("%type%", type.toString())
                 );
@@ -62,7 +66,7 @@ public class DamageType extends MissionType {
 
     @Override
     public Type getType() {
-        return Type.DAMAGE;
+        return Type.FISHING;
     }
 
     @Override

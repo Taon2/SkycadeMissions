@@ -6,4 +6,12 @@ public enum Type {
     DAMAGE,
     KILLS,
     MINING,
+    SHOP,
+    ENCHANT,
+    GENERATE,
+    SWINDLE,
+    SNOWBALLGUN,
+    FISHING,
+    LEVEL,
+    PLAYTIME
 }

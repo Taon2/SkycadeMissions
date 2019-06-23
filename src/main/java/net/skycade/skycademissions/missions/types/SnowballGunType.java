@@ -12,14 +12,14 @@ import org.bukkit.entity.Player;
 import java.io.File;
 import java.util.*;
 
-public class DamageType extends MissionType {
+public class SnowballGunType extends MissionType {
 
-    private static final Localization.Message NOT_ENOUGH_DAMAGE = new Localization.Message("not-enough-damage", "&cYou need to deal %val% more damage to %type%!");
+    private static final Localization.Message NOT_ENOUGH_HIT = new Localization.Message("not-enough-hit", "&cYou need to hit $%val% more players!");
 
-    public DamageType() {
+    public SnowballGunType() {
         super();
-        Localization.getInstance().registerMessages("skycade.factions.missions.damage",
-                NOT_ENOUGH_DAMAGE
+        Localization.getInstance().registerMessages("skycade.prisons.missions.hit",
+                NOT_ENOUGH_HIT
         );
     }
 
@@ -47,9 +47,8 @@ public class DamageType extends MissionType {
             int current  = getCurrentCount(player.getUniqueId(), miss, type.toString());
             if (current < amount) {
                 hasFailed = true;
-                player.sendMessage(NOT_ENOUGH_DAMAGE.getMessage(player)
+                player.sendMessage(NOT_ENOUGH_HIT.getMessage(player)
                         .replaceAll("%val%", (amount - current) + "")
-                        .replaceAll("%type%", type.toString())
                 );
             }
         }
@@ -62,7 +61,7 @@ public class DamageType extends MissionType {
 
     @Override
     public Type getType() {
-        return Type.DAMAGE;
+        return Type.SNOWBALLGUN;
     }
 
     @Override

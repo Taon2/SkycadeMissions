@@ -57,10 +57,11 @@ public class MissionManager implements Listener {
 
                     YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
                     ConfigurationSection section = config.getConfigurationSection(uuid.toString());
-                    if (section != null)
+                    if (section != null) {
                         for (String s : section.getKeys(false)) {
                             map.put(s, section.getLong(s));
                         }
+                    }
 
                     return map;
                 }
@@ -130,6 +131,14 @@ public class MissionManager implements Listener {
         new DamageType();
         new KillType();
         new MiningType();
+        new ShopType();
+        new EnchantType();
+        new GenerateType();
+        new SwindleType();
+        new SnowballGunType();
+        new FishingType();
+        new LevelType();
+        new PlaytimeType();
 
         Bukkit.getPluginManager().registerEvents(new TypesListener(), plugin);
     }
@@ -178,6 +187,14 @@ public class MissionManager implements Listener {
                 Object obj = s.getOrDefault("amount", null);
                 if (obj != null) amount = (Integer) obj;
 
+                short durability = -1;
+                obj = s.getOrDefault("durability", null);
+                if (obj != null) durability = ((Integer) obj).shortValue();
+
+                if (durability != -1) {
+                    countedThing = countedThing + ":" + durability;
+                }
+
                 currentCount = ChatColor.GREEN + countedThing + ": " + ChatColor.AQUA + MissionManager.getType(mission.getType()).getCurrentCount(player.getUniqueId(), mission, countedThing) + (ChatColor.RED + "/") + ChatColor.AQUA + amount;
                 countingLore.add(currentCount);
             }
@@ -188,7 +205,7 @@ public class MissionManager implements Listener {
             lore.addAll(mission.getLore());
             lore.addAll(countingLore);
 
-            if (mission.getIcon() == Material.INK_SACK || mission.getIcon() == Material.WOOL || mission.getIcon() == Material.LOG) {
+            if (mission.getIcon() == Material.INK_SACK || mission.getIcon() == Material.WOOL || mission.getIcon() == Material.LOG || mission.getIcon() == Material.RAW_FISH) {
                 ItemBuilder b = new ItemBuilder(new ItemStack(mission.getIcon(), 1, mission.getDurability()))
                         .setDisplayName(ChatColor.AQUA + "" + ChatColor.BOLD + mission.getDisplayName())
                         .setLore(lore);
@@ -269,8 +286,6 @@ public class MissionManager implements Listener {
     public void onInventoryClick(InventoryClickEvent e) {
         if (e.getClickedInventory() == null) return;
 
-
-
         if (e.getClickedInventory().getName().equals("§c§lMissions") && e.getSlot() == 26) {
             openRewardsGUI((Player) e.getWhoClicked());
         } else if (e.getClickedInventory().getName().equals("§c§lRewards") && e.getSlot() == 26) {
@@ -281,6 +296,46 @@ public class MissionManager implements Listener {
     }
 
     public static void addCounter(UUID uuid, Mission mission, String path, int count) {
+        File file = new File(plugin.getDataFolder(), "completed.yml");
+
+        YamlConfiguration conf;
+
+        if (!file.exists()) {
+            conf = new YamlConfiguration();
+        } else {
+            conf = YamlConfiguration.loadConfiguration(file);
+        }
+
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
+        calendar.set(Calendar.HOUR, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+
+        long timeInMillis = calendar.getTimeInMillis();
+
+        boolean doesCountExist = conf.contains(uuid.toString() + ".counters." + mission.getHandle());
+        boolean isTimeEnabled = conf.getLong(uuid.toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
+
+        //Checks to see if there is an active counter within the last 24 hours
+        if ((!doesCountExist || !isTimeEnabled) && !hasPlayerCompleted(uuid, mission)) {
+            //Starts a new counter if there is not an active counter and the mission hasn't been completed
+            conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + path, count);
+            conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".activated", System.currentTimeMillis());
+        } else if (!hasPlayerCompleted(uuid, mission)){
+            //Increments the existing counter as long as the mission hasn't been completed
+            conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + path, count);
+        }
+
+        try {
+            conf.save(file);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        completedMissions.invalidate(uuid);
+    }
+
+    public static void addCounter(UUID uuid, Mission mission, String path, long count) {
         File file = new File(plugin.getDataFolder(), "completed.yml");
 
         YamlConfiguration conf;

@@ -2,6 +2,7 @@ package net.skycade.skycademissions.missions;
 
 import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -75,7 +76,7 @@ public class DailyMissionManager extends BukkitRunnable {
             }
 
             NEWDAILYMISSIONS.broadcast();
-            Bukkit.getLogger().info(NEWDAILYMISSIONS.toString());
+            Bukkit.getLogger().info(ChatColor.translateAlternateColorCodes('&', NEWDAILYMISSIONS.toString()));
         }
     }
 

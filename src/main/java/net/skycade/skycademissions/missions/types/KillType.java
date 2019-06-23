@@ -14,7 +14,7 @@ import java.util.*;
 
 public class KillType extends MissionType {
 
-    private static final Localization.Message NOT_ENOUGH_KILLS = new Localization.Message("not-enough-kills", "&cYou are need to kill %val% more %type%!");
+    private static final Localization.Message NOT_ENOUGH_KILLS = new Localization.Message("not-enough-kills", "&cYou need to kill %val% more %type%!");
 
     public KillType() {
         super();

@@ -24,5 +24,4 @@ public abstract class MissionType implements Listener {
     public abstract int getCurrentCount(UUID uuid, Mission mission, String countedThing);
 
     public void postComplete(Player player, ConfigurationSection params) {}
-
 }
