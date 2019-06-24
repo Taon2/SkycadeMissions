@@ -29,8 +29,8 @@ import java.util.stream.Collectors;
 
 public class MissionManager implements Listener {
 
-    private static YamlConfiguration yaml;
-    private static File file;
+    private static YamlConfiguration missionsYaml;
+    private static File missionsFile;
 
     private static SkycadeMissionsPlugin plugin = SkycadeMissionsPlugin.getInstance();
 
@@ -68,18 +68,18 @@ public class MissionManager implements Listener {
             });
 
     public static void load() {
-        file = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "missions.yml");
+        missionsFile = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "missions.yml");
 
-        if (!file.exists()) {
-            yaml = new YamlConfiguration();
+        if (!missionsFile.exists()) {
+            missionsYaml = new YamlConfiguration();
             save();
         } else {
-            yaml = YamlConfiguration.loadConfiguration(file);
+            missionsYaml = YamlConfiguration.loadConfiguration(missionsFile);
             save();
         }
 
-        ConfigurationSection main = yaml.getConfigurationSection("missions");
-        rewards = yaml.getConfigurationSection("rewards");
+        ConfigurationSection main = missionsYaml.getConfigurationSection("missions");
+        rewards = missionsYaml.getConfigurationSection("rewards");
 
         if (main != null) {
             for (String handle : main.getKeys(false)) {
@@ -140,12 +140,14 @@ public class MissionManager implements Listener {
         new LevelType();
         new PlaytimeType();
 
+        loadCompletedConfig();
+
         Bukkit.getPluginManager().registerEvents(new TypesListener(), plugin);
     }
 
     private static void save() {
         try {
-            yaml.save(file);
+            missionsYaml.save(missionsFile);
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Couldn't save missions yaml file.", e);
         }
@@ -296,15 +298,7 @@ public class MissionManager implements Listener {
     }
 
     public static void addCounter(UUID uuid, Mission mission, String path, int count) {
-        File file = new File(plugin.getDataFolder(), "completed.yml");
-
-        YamlConfiguration conf;
-
-        if (!file.exists()) {
-            conf = new YamlConfiguration();
-        } else {
-            conf = YamlConfiguration.loadConfiguration(file);
-        }
+        YamlConfiguration conf = MissionManager.getCompletedConfig();
 
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
         calendar.set(Calendar.HOUR, 0);
@@ -326,25 +320,13 @@ public class MissionManager implements Listener {
             conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + path, count);
         }
 
-        try {
-            conf.save(file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        setCompletedConfig(conf);
 
         completedMissions.invalidate(uuid);
     }
 
     public static void addCounter(UUID uuid, Mission mission, String path, long count) {
-        File file = new File(plugin.getDataFolder(), "completed.yml");
-
-        YamlConfiguration conf;
-
-        if (!file.exists()) {
-            conf = new YamlConfiguration();
-        } else {
-            conf = YamlConfiguration.loadConfiguration(file);
-        }
+        YamlConfiguration conf = MissionManager.getCompletedConfig();
 
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
         calendar.set(Calendar.HOUR, 0);
@@ -366,33 +348,58 @@ public class MissionManager implements Listener {
             conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + path, count);
         }
 
-        try {
-            conf.save(file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        setCompletedConfig(conf);
 
         completedMissions.invalidate(uuid);
     }
 
-    static void completeMission(UUID uuid, Mission mission) {
-        File file = new File(plugin.getDataFolder(), "completed.yml");
+    public static int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
+        YamlConfiguration conf = MissionManager.getCompletedConfig();
+        List<Map<?, ?>> section = mission.getParams().getMapList("items");
+        int currentCount = 0;
 
-        YamlConfiguration conf;
+        for (Map<?, ?> s : section) {
+            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
+            calendar.set(Calendar.HOUR, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
 
-        if (!file.exists()) {
-            conf = new YamlConfiguration();
-        } else {
-            conf = YamlConfiguration.loadConfiguration(file);
+            long timeInMillis = calendar.getTimeInMillis();
+
+            boolean doesCountExist = conf.contains(uuid.toString() + ".counters." + mission.getHandle());
+            boolean isTimeEnabled = conf.getLong(uuid.toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
+
+            //Checks to see if there is an active counter within the last 24 hours
+            if (MissionManager.hasPlayerCompleted(uuid, mission)) {
+                //Returns max value if already completed
+                int amount = 1;
+                Object obj = s.getOrDefault("amount", null);
+                if (obj != null) amount = (Integer) obj;
+
+                return amount;
+            } else if ((!doesCountExist || !isTimeEnabled) && !MissionManager.hasPlayerCompleted(uuid, mission)) {
+                //Starts a new counter if there is not an active counter and the mission hasn't been completed
+                conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + countedThing, currentCount);
+                conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".activated", System.currentTimeMillis());
+            } else {
+                //Returns the existing counter
+                currentCount = conf.getInt(uuid.toString() + ".counters." + mission.getHandle() + "." + countedThing);
+            }
         }
+
+        MissionManager.setCompletedConfig(conf);
+
+        return currentCount;
+    }
+
+    static void completeMission(UUID uuid, Mission mission) {
+        YamlConfiguration conf = MissionManager.getCompletedConfig();
+
         conf.set(uuid.toString() + "." + "counters" + mission.getHandle(), null);
         conf.set(uuid.toString() + "." + mission.getHandle(), System.currentTimeMillis());
 
-        try {
-            conf.save(file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        MissionManager.setCompletedConfig(conf);
+        MissionManager.saveCompletedConfig();
 
         completedMissions.invalidate(uuid);
     }
@@ -435,5 +442,34 @@ public class MissionManager implements Listener {
             }
         }
         return null;
+    }
+
+    private static File completedFile;
+    private static YamlConfiguration completedConfiguration;
+
+    private static void loadCompletedConfig() {
+        completedFile = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "completed.yml");
+
+        if (!completedFile.exists()) {
+            completedConfiguration = new YamlConfiguration();
+        } else {
+            completedConfiguration = YamlConfiguration.loadConfiguration(completedFile);
+        }
+    }
+
+    public static YamlConfiguration getCompletedConfig() {
+        return completedConfiguration;
+    }
+
+    public static void setCompletedConfig(YamlConfiguration conf) {
+        completedConfiguration = conf;
+    }
+
+    public static void saveCompletedConfig() {
+        try {
+            completedConfiguration.save(completedFile);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -1,7 +1,6 @@
 package net.skycade.skycademissions.missions.types;
 
 import net.skycade.SkycadeCore.Localization;
-import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.Mission;
 import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.missions.Result;
@@ -9,7 +8,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
-import java.io.File;
 import java.util.*;
 
 public class PlaytimeType extends MissionType {
@@ -44,7 +42,7 @@ public class PlaytimeType extends MissionType {
             Object obj = s.getOrDefault("amount", null);
             if (obj != null) amount = (Integer) obj;
 
-            int current  = getCurrentCount(player.getUniqueId(), miss, type.toString());
+            long current  = getCurrentLongCount(player.getUniqueId(), miss, type.toString());
             if (current < amount*3600000) {
                 hasFailed = true;
                 player.sendMessage(NOT_ENOUGH_PLAYTIME.getMessage(player)
@@ -71,19 +69,11 @@ public class PlaytimeType extends MissionType {
     }
 
     private long getCurrentLongCount(UUID uuid, Mission mission, String countedThing) {
-        File file = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "completed.yml");
+        YamlConfiguration conf = MissionManager.getCompletedConfig();
         List<Map<?, ?>> section = mission.getParams().getMapList("items");
         long currentCount = 0;
 
         for (Map<?, ?> s : section) {
-            YamlConfiguration conf;
-
-            if (!file.exists()) {
-                conf = new YamlConfiguration();
-            } else {
-                conf = YamlConfiguration.loadConfiguration(file);
-            }
-
             Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
             calendar.set(Calendar.HOUR, 0);
             calendar.set(Calendar.MINUTE, 0);
@@ -99,7 +89,7 @@ public class PlaytimeType extends MissionType {
                 //Returns max value if already completed
                 long amount = 1;
                 Object obj = s.getOrDefault("amount", null);
-                if (obj != null) amount = (Long) obj*3600000;
+                if (obj != null) amount = (long) (((int) obj) * 3600000);
 
                 return amount;
             } else if ((!doesCountExist || !isTimeEnabled) && !MissionManager.hasPlayerCompleted(uuid, mission)) {
@@ -111,6 +101,9 @@ public class PlaytimeType extends MissionType {
                 currentCount = conf.getLong(uuid.toString() + ".counters." + mission.getHandle() + "." + countedThing);
             }
         }
+
+        MissionManager.setCompletedConfig(conf);
+
         return currentCount;
     }
 }

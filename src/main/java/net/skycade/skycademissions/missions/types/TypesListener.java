@@ -6,7 +6,6 @@ import net.skycade.SkycadeEnchants.events.SkycadeGenerateEnchantEvent;
 import net.skycade.SkycadeEnchants.events.SkycadeSnowballGunEvent;
 import net.skycade.SkycadeEnchants.events.SkycadeSwindlerEvent;
 import net.skycade.prisons.util.EnchantmentTypes;
-import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.DailyMissionManager;
 import net.skycade.skycademissions.missions.Mission;
 import net.skycade.skycademissions.missions.MissionManager;
@@ -26,8 +25,6 @@ import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 public class TypesListener implements Listener {
@@ -240,18 +237,11 @@ public class TypesListener implements Listener {
     public void onPlayerLogin(PlayerLoginEvent event) {
         for (Mission mission : currentCountableMissions) {
             if (mission.getType() == Type.PLAYTIME) {
-                File file = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "completed.yml");
-                YamlConfiguration conf;
+                YamlConfiguration conf = MissionManager.getCompletedConfig();
 
                 List<Map<?, ?>> section = mission.getParams().getMapList("items");
 
                 for (Map<?, ?> s : section) {
-                    if (!file.exists()) {
-                        conf = new YamlConfiguration();
-                    } else {
-                        conf = YamlConfiguration.loadConfiguration(file);
-                    }
-
                     Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
                     calendar.set(Calendar.HOUR, 0);
                     calendar.set(Calendar.MINUTE, 0);
@@ -272,6 +262,7 @@ public class TypesListener implements Listener {
                         onlineMap.put(event.getPlayer().getUniqueId(), System.currentTimeMillis());
                     }
                 }
+                MissionManager.setCompletedConfig(conf);
             }
         }
     }
@@ -508,10 +499,8 @@ public class TypesListener implements Listener {
                             int count = amount;
 
                             if (MissionManager.getType(mission.getType()).getCurrentCount(shooter.getUniqueId(), mission, type.toString()) < amount) {
-                                File file = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "completed.yml");
-                                if (!file.exists()) return;
+                                YamlConfiguration conf = MissionManager.getCompletedConfig();
 
-                                YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
                                 Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
                                 calendar.set(Calendar.HOUR, 0);
                                 calendar.set(Calendar.MINUTE, 0);
@@ -519,28 +508,24 @@ public class TypesListener implements Listener {
 
                                 long timeInMillis = calendar.getTimeInMillis();
 
-                                boolean doesHitPlayersExist = config.contains(event.getShooter().getUniqueId().toString() + ".counters." + mission.getHandle() + ".hitPlayers");
-                                boolean isTimeEnabled = config.getLong(shooter.getUniqueId().toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
+                                boolean doesHitPlayersExist = conf.contains(event.getShooter().getUniqueId().toString() + ".counters." + mission.getHandle() + ".hitPlayers");
+                                boolean isTimeEnabled = conf.getLong(shooter.getUniqueId().toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
                                 List<String> hitPlayers = new ArrayList<>();
 
                                 //Resets the hitPlayers list if the mission is not current
                                 if (doesHitPlayersExist && !isTimeEnabled) {
-                                    config.set(event.getShooter().getUniqueId().toString() + ".counters." + mission.getHandle() + ".hitPlayers", hitPlayers);
+                                    conf.set(event.getShooter().getUniqueId().toString() + ".counters." + mission.getHandle() + ".hitPlayers", hitPlayers);
                                 }
 
                                 if (doesHitPlayersExist && isTimeEnabled)
-                                    hitPlayers.addAll(config.getStringList(event.getShooter().getUniqueId().toString() + ".counters." + mission.getHandle() + ".hitPlayers"));
+                                    hitPlayers.addAll(conf.getStringList(event.getShooter().getUniqueId().toString() + ".counters." + mission.getHandle() + ".hitPlayers"));
 
                                 //If the player has already been hit, return
                                 if (hitPlayers.contains(target.getUniqueId().toString())) return;
                                 hitPlayers.add(target.getUniqueId().toString());
-                                config.set(event.getShooter().getUniqueId().toString() + ".counters." + mission.getHandle() + ".hitPlayers", hitPlayers);
+                                conf.set(event.getShooter().getUniqueId().toString() + ".counters." + mission.getHandle() + ".hitPlayers", hitPlayers);
 
-                                try {
-                                    config.save(file);
-                                } catch (IOException e) {
-                                    throw new RuntimeException(e);
-                                }
+                                MissionManager.setCompletedConfig(conf);
 
                                 count = MissionManager.getType(mission.getType()).getCurrentCount(shooter.getUniqueId(), mission, type.toString()) + 1;
                             }

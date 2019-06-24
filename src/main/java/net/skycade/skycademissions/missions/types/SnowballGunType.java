@@ -1,16 +1,15 @@
 package net.skycade.skycademissions.missions.types;
 
 import net.skycade.SkycadeCore.Localization;
-import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.Mission;
 import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.missions.Result;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
-import java.io.File;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class SnowballGunType extends MissionType {
 
@@ -66,46 +65,6 @@ public class SnowballGunType extends MissionType {
 
     @Override
     public int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
-        File file = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "completed.yml");
-        List<Map<?, ?>> section = mission.getParams().getMapList("items");
-        int currentCount = 0;
-
-        for (Map<?, ?> s : section) {
-            YamlConfiguration conf;
-
-            if (!file.exists()) {
-                conf = new YamlConfiguration();
-            } else {
-                conf = YamlConfiguration.loadConfiguration(file);
-            }
-
-            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
-            calendar.set(Calendar.HOUR, 0);
-            calendar.set(Calendar.MINUTE, 0);
-            calendar.set(Calendar.SECOND, 0);
-
-            long timeInMillis = calendar.getTimeInMillis();
-
-            boolean doesCountExist = conf.contains(uuid.toString() + ".counters." + mission.getHandle());
-            boolean isTimeEnabled = conf.getLong(uuid.toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
-
-            //Checks to see if there is an active counter within the last 24 hours
-            if (MissionManager.hasPlayerCompleted(uuid, mission)) {
-                //Returns max value if already completed
-                int amount = 1;
-                Object obj = s.getOrDefault("amount", null);
-                if (obj != null) amount = (Integer) obj;
-
-                return amount;
-            } else if ((!doesCountExist || !isTimeEnabled) && !MissionManager.hasPlayerCompleted(uuid, mission)) {
-                //Starts a new counter if there is not an active counter and the mission hasn't been completed
-                conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + countedThing, currentCount);
-                conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".activated", System.currentTimeMillis());
-            } else {
-                //Returns the existing counter
-                currentCount = conf.getInt(uuid.toString() + ".counters." + mission.getHandle() + "." + countedThing);
-            }
-        }
-        return currentCount;
+        return MissionManager.getCurrentCount(uuid, mission, countedThing);
     }
 }
