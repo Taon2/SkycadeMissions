@@ -172,7 +172,7 @@ public class TypesListener implements Listener {
     }
 
     //Listener for the FishingType
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onFishCatch(PlayerFishEvent e) {
         for (Mission mission : currentCountableMissions) {
             if (mission.getType() == Type.FISHING) {
