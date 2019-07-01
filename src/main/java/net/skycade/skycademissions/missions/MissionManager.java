@@ -395,7 +395,7 @@ public class MissionManager implements Listener {
     static void completeMission(UUID uuid, Mission mission) {
         YamlConfiguration conf = MissionManager.getCompletedConfig();
 
-        conf.set(uuid.toString() + "." + "counters" + mission.getHandle(), null);
+        conf.set(uuid.toString() + "." + "counters." + mission.getHandle(), null);
         conf.set(uuid.toString() + "." + mission.getHandle(), System.currentTimeMillis());
 
         MissionManager.setCompletedConfig(conf);

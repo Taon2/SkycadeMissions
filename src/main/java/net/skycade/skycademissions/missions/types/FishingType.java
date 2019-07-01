@@ -43,11 +43,17 @@ public class FishingType extends MissionType {
             Object obj = s.getOrDefault("amount", null);
             if (obj != null) amount = (Integer) obj;
 
-            short durability = 0;
+            short durability = -1;
             obj = s.getOrDefault("durability", null);
             if (obj != null) durability = ((Integer) obj).shortValue();
 
-            int current  = getCurrentCount(player.getUniqueId(), miss, type.toString() +  ":" + durability);
+            String countedThing = type.toString();
+
+            if (durability != -1) {
+                countedThing = countedThing + ":" + durability;
+            }
+
+            int current  = getCurrentCount(player.getUniqueId(), miss, countedThing);
             if (current < amount) {
                 hasFailed = true;
                 player.sendMessage(NOT_ENOUGH_FISH.getMessage(player)
