@@ -46,26 +46,27 @@ public class MissionManager implements Listener {
         }
     }
 
-    private static final LoadingCache<UUID, Map<String, Long>> completedMissions = CacheBuilder.newBuilder()
-            .build(new CacheLoader<UUID, Map<String, Long>>() {
-                @Override
-                public Map<String, Long> load(UUID uuid) {
-                    Map<String, Long> map = new HashMap<>();
-
-                    File file = new File(plugin.getDataFolder(), "completed.yml");
-                    if (!file.exists()) return map;
-
-                    YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
-                    ConfigurationSection section = config.getConfigurationSection(uuid.toString());
-                    if (section != null) {
-                        for (String s : section.getKeys(false)) {
-                            map.put(s, section.getLong(s));
-                        }
-                    }
-
-                    return map;
-                }
-            });
+    //Disabled because of huge loading lag
+//    private static final LoadingCache<UUID, Map<String, Long>> completedMissions = CacheBuilder.newBuilder()
+//            .build(new CacheLoader<UUID, Map<String, Long>>() {
+//                @Override
+//                public Map<String, Long> load(UUID uuid) {
+//                    Map<String, Long> map = new HashMap<>();
+//
+//                    File file = new File(plugin.getDataFolder(), "completed.yml");
+//                    if (!file.exists()) return map;
+//
+//                    YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+//                    ConfigurationSection section = config.getConfigurationSection(uuid.toString());
+//                    if (section != null) {
+//                        for (String s : section.getKeys(false)) {
+//                            map.put(s, section.getLong(s));
+//                        }
+//                    }
+//
+//                    return map;
+//                }
+//            });
 
     public static void load() {
         missionsFile = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "missions.yml");
@@ -322,7 +323,7 @@ public class MissionManager implements Listener {
 
         setCompletedConfig(conf);
 
-        completedMissions.invalidate(uuid);
+        //completedMissions.invalidate(uuid);
     }
 
     public static void addCounter(UUID uuid, Mission mission, String path, long count) {
@@ -350,7 +351,7 @@ public class MissionManager implements Listener {
 
         setCompletedConfig(conf);
 
-        completedMissions.invalidate(uuid);
+        //completedMissions.invalidate(uuid);
     }
 
     public static int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
@@ -401,15 +402,24 @@ public class MissionManager implements Listener {
         MissionManager.setCompletedConfig(conf);
         MissionManager.saveCompletedConfig();
 
-        completedMissions.invalidate(uuid);
+        //completedMissions.invalidate(uuid);
     }
 
     public static boolean hasPlayerCompleted(UUID uuid, Mission mission) {
-        Map<String, Long> map = completedMissions.getUnchecked(uuid);
-        if (!map.containsKey(mission.getHandle())) return false;
+        YamlConfiguration conf = MissionManager.getCompletedConfig();
 
-        if (mission.isDaily()) {
-            Long timestamp = map.get(mission.getHandle());
+        //Map<String, Long> map = completedMissions.getUnchecked(uuid);
+
+        if (!conf.contains(uuid.toString())) {
+            return false;
+        }
+
+        if (conf.contains(uuid.toString())) {
+            if (conf.contains(uuid.toString() + "." + mission.getHandle())) {
+                return false;
+            }
+
+            long timestamp = conf.getLong(uuid.toString() + "." + mission.getHandle());
 
             Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
             calendar.set(Calendar.HOUR, 0);
@@ -418,9 +428,26 @@ public class MissionManager implements Listener {
 
             long timeInMillis = calendar.getTimeInMillis();
             return timestamp > timeInMillis;
-        } else {
+        } else  {
             return true;
         }
+
+        //Disabled because of huge loading lag
+//        if (!map.containsKey(mission.getHandle())) return false;
+//
+//        if (mission.isDaily()) {
+//            Long timestamp = map.get(mission.getHandle());
+//
+//            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
+//            calendar.set(Calendar.HOUR, 0);
+//            calendar.set(Calendar.MINUTE, 0);
+//            calendar.set(Calendar.SECOND, 0);
+//
+//            long timeInMillis = calendar.getTimeInMillis();
+//            return timestamp > timeInMillis;
+//        } else {
+//            return true;
+//        }
     }
 
     public static MissionType getType(Type type) {

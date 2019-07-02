@@ -103,21 +103,39 @@ public class TypesListener implements Listener {
                 for (Map<?, ?> s : section) {
                     Object type = s.getOrDefault("type", null);
                     if (type == null) continue;
-                    EntityType entityType = EntityType.valueOf(type.toString());
 
-                    int amount = 1;
-                    Object obj = s.getOrDefault("amount", null);
-                    if (obj != null) amount = (Integer) obj;
+                    if (type.toString().equals("ANY")) {
+                        int amount = 1;
+                        Object obj = s.getOrDefault("amount", null);
+                        if (obj != null) amount = (Integer) obj;
 
-                    if (e.getEntity().getKiller() != null && e.getEntity().getKiller().getType() == EntityType.PLAYER && e.getEntity().getType() == entityType) {
-                        Player p = e.getEntity().getKiller();
-                        int count = amount;
+                        if (e.getEntity().getKiller() != null) {
+                            Player p = e.getEntity().getKiller();
+                            int count = amount;
 
-                        if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, entityType.toString()) < amount) {
-                            count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, entityType.toString()) + 1;
+                            if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
+                                count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + 1;
+                            }
+
+                            MissionManager.addCounter(p.getUniqueId(), mission, type.toString(), count);
                         }
+                    } else {
+                        EntityType entityType = EntityType.valueOf(type.toString());
 
-                        MissionManager.addCounter(p.getUniqueId(), mission, entityType.toString(), count);
+                        int amount = 1;
+                        Object obj = s.getOrDefault("amount", null);
+                        if (obj != null) amount = (Integer) obj;
+
+                        if (e.getEntity().getKiller() != null && e.getEntity().getKiller().getType() == EntityType.PLAYER && e.getEntity().getType() == entityType) {
+                            Player p = e.getEntity().getKiller();
+                            int count = amount;
+
+                            if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, entityType.toString()) < amount) {
+                                count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, entityType.toString()) + 1;
+                            }
+
+                            MissionManager.addCounter(p.getUniqueId(), mission, entityType.toString(), count);
+                        }
                     }
                 }
             }
