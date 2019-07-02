@@ -415,7 +415,7 @@ public class MissionManager implements Listener {
         }
 
         if (conf.contains(uuid.toString())) {
-            if (conf.contains(uuid.toString() + "." + mission.getHandle())) {
+            if (!conf.contains(uuid.toString() + "." + mission.getHandle())) {
                 return false;
             }
 
