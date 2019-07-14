@@ -51,15 +51,19 @@ public class TypesListener implements Listener {
     }
 
     public TypesListener() {
+        loadCurrentCountableMissions();
+
+        Bukkit.getPluginManager().registerEvents(new SkycadeShopListener(), SkycadeMissionsPlugin.getInstance()); // don't suicide if shop plugin is not loaded
+        Bukkit.getPluginManager().registerEvents(new SkycadeEnchantsListener(), SkycadeMissionsPlugin.getInstance()); // don't suicide if enchants plugin is not loaded
+    }
+
+    public static void loadCurrentCountableMissions() {
         for (String handle : DailyMissionManager.getCurrent()) {
             Mission mission = MissionManager.getMissionFromName(handle);
             if (mission != null && countableTypes.contains(mission.getType())) {
                 currentCountableMissions.add(mission);
             }
         }
-
-        Bukkit.getPluginManager().registerEvents(new SkycadeShopListener(), SkycadeMissionsPlugin.getInstance()); // don't suicide if shop plugin is not loaded
-        Bukkit.getPluginManager().registerEvents(new SkycadeEnchantsListener(), SkycadeMissionsPlugin.getInstance()); // don't suicide if enchants plugin is not loaded
     }
 
     //Listener for the DamageType

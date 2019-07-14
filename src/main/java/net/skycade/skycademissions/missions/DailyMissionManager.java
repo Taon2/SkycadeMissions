@@ -1,6 +1,7 @@
 package net.skycade.skycademissions.missions;
 
 import net.skycade.skycademissions.SkycadeMissionsPlugin;
+import net.skycade.skycademissions.missions.types.TypesListener;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -74,6 +75,8 @@ public class DailyMissionManager extends BukkitRunnable {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+
+            TypesListener.loadCurrentCountableMissions();
 
             NEWDAILYMISSIONS.broadcast();
             Bukkit.getLogger().info(ChatColor.translateAlternateColorCodes('&', NEWDAILYMISSIONS.toString()));
