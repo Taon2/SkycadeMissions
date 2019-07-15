@@ -43,7 +43,6 @@ public class DailyMissionManager extends BukkitRunnable {
             }
         }
 
-
         Calendar cal = Calendar.getInstance();
 //        cal.set(Calendar.HOUR, 0);
 //        cal.set(Calendar.MINUTE, 0);
@@ -53,6 +52,8 @@ public class DailyMissionManager extends BukkitRunnable {
         if (lastGenerated + 86400000 < today) {
             // generate, persist
             List<Mission> daily = MissionManager.getAllDaily();
+            List<String> oldMissions = new ArrayList<>(current);
+
             current.clear();
 
             for (int i = 0; i < 3 && i < daily.size(); ++i) {
@@ -60,7 +61,8 @@ public class DailyMissionManager extends BukkitRunnable {
                 do {
                     int num = ThreadLocalRandom.current().nextInt(daily.size());
                     mission = daily.get(num);
-                } while (current.contains(mission.getHandle()));
+                } while (current.contains(mission.getHandle()) || oldMissions.contains(mission.getHandle()));
+
 
                 current.add(mission.getHandle());
             }
