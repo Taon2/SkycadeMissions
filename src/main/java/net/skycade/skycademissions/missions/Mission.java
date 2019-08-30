@@ -3,18 +3,20 @@ package net.skycade.skycademissions.missions;
 import net.skycade.skycademissions.missions.types.Type;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.List;
+import java.util.Map;
 
 public class Mission {
 
     private final boolean isDaily;
+    private boolean isCurrent;
+    private long generatedOn;
     private final Type type;
     private final String handle;
     private final String displayName;
 
-    private final ConfigurationSection params;
+    private final List<Map<?, ?>> params;
 
     private final MissionLevel level;
 
@@ -24,15 +26,15 @@ public class Mission {
 
     private final int position;
 
-    private final long expiry;
-
     boolean isDaily() {
         return isDaily;
     }
 
-    Mission(Boolean isDaily, Type type, String handle, String displayName, ConfigurationSection params,
-            MissionLevel level, String icon, List<String> lore, int position, long expiry) {
+    Mission(Boolean isDaily, Boolean isCurrent, long generatedOn, Type type, String handle, String displayName, List<Map<?, ?>> params,
+            MissionLevel level, String icon, List<String> lore, int position) {
         this.isDaily = isDaily;
+        this.isCurrent = isCurrent;
+        this.generatedOn = generatedOn;
         this.type = type;
         this.handle = handle;
         this.displayName = displayName == null ? null : ChatColor.translateAlternateColorCodes('&', displayName);
@@ -51,8 +53,6 @@ public class Mission {
 
         this.lore = lore;
         this.position = position;
-        this.expiry = expiry;
-
     }
 
     short getDurability() {
@@ -71,7 +71,7 @@ public class Mission {
         return displayName;
     }
 
-    public ConfigurationSection getParams() {
+    public List<Map<?, ?>> getParams() {
         return params;
     }
 
@@ -92,7 +92,19 @@ public class Mission {
         return position;
     }
 
-    public long getExpiry() {
-        return expiry;
+    public boolean isCurrent() {
+        return isCurrent;
+    }
+
+    public void setCurrent(boolean isCurrent){
+        this.isCurrent = isCurrent;
+    }
+
+    public long getGeneratedOn() {
+        return generatedOn;
+    }
+
+    public void setGeneratedOn(long generatedOn) {
+        this.generatedOn = generatedOn;
     }
 }

@@ -1,14 +1,14 @@
 package net.skycade.skycademissions.missions.types;
 
 import net.skycade.SkycadeCore.Localization;
+import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.missions.Mission;
-import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.missions.Result;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class PlaytimeType extends MissionType {
 
@@ -22,18 +22,16 @@ public class PlaytimeType extends MissionType {
     }
 
     @Override
-    public Result validate(Player player, ConfigurationSection params) {
+    public Result validate(Player player, List<Map<?, ?>> params) {
         return new Result(Result.Type.FAILURE);
     }
 
     @Override
-    public Result validate(Player player, ConfigurationSection params, Mission miss) {
+    public Result validate(Player player, List<Map<?, ?>> params, Mission miss) {
 
         boolean hasFailed = false;
 
-        List<Map<?, ?>> section = params.getMapList("items");
-
-        for (Map<?, ?> s : section) {
+        for (Map<?, ?> s : params) {
 
             Object type = s.getOrDefault("type", null);
             if (type == null) continue;
@@ -68,42 +66,9 @@ public class PlaytimeType extends MissionType {
         return (int) (getCurrentLongCount(uuid, mission, countedThing)/3600000);
     }
 
-    private long getCurrentLongCount(UUID uuid, Mission mission, String countedThing) {
-        YamlConfiguration conf = MissionManager.getCompletedConfig();
-        List<Map<?, ?>> section = mission.getParams().getMapList("items");
-        long currentCount = 0;
+    private long getCurrentLongCount(UUID uuid, Mission mission, String counted) {
+        MissionsUser user = MissionsUser.get(uuid);
 
-        for (Map<?, ?> s : section) {
-            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
-            calendar.set(Calendar.HOUR, 0);
-            calendar.set(Calendar.MINUTE, 0);
-            calendar.set(Calendar.SECOND, 0);
-
-            long timeInMillis = calendar.getTimeInMillis();
-
-            boolean doesCountExist = conf.contains(uuid.toString() + ".counters." + mission.getHandle());
-            boolean isTimeEnabled = conf.getLong(uuid.toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
-
-            //Checks to see if there is an active counter within the last 24 hours
-            if (MissionManager.hasPlayerCompleted(uuid, mission)) {
-                //Returns max value if already completed
-                long amount = 1;
-                Object obj = s.getOrDefault("amount", null);
-                if (obj != null) amount = (long) (((int) obj) * 3600000);
-
-                return amount;
-            } else if ((!doesCountExist || !isTimeEnabled) && !MissionManager.hasPlayerCompleted(uuid, mission)) {
-                //Starts a new counter if there is not an active counter and the mission hasn't been completed
-                conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + countedThing, currentCount);
-                conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".activated", System.currentTimeMillis());
-            } else {
-                //Returns the existing counter
-                currentCount = conf.getLong(uuid.toString() + ".counters." + mission.getHandle() + "." + countedThing);
-            }
-        }
-
-        MissionManager.setCompletedConfig(conf);
-
-        return currentCount;
+        return user.getCurrentLongCount(mission, counted);
     }
 }

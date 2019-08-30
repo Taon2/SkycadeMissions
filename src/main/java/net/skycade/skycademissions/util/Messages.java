@@ -12,8 +12,6 @@ public class Messages {
     public static final Message NEWDAILYMISSIONS = new Message("new-daily-missions", "&6&lThere are new missions to complete today! &c&l/missions");
     public static final Message REWARDWON = new Message("reward-won", "&6You received %reward% as your reward!");
 
-
-
     public static void init() {
         Localization.getInstance().registerMessages("skycade.missions",
                 COMPLETEMISSION,

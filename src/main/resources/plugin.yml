@@ -1,5 +1,5 @@
 name: SkycadeMissions
-version: 1.4.6-SNAPSHOT
+version: 2.0.0-SNAPSHOT
 description: Skycade Missions
 authors: ["Christian Doughty (Taon2)"]
 main: net.skycade.skycademissions.SkycadeMissionsPlugin

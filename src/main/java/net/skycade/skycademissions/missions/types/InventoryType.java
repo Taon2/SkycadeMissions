@@ -2,12 +2,10 @@ package net.skycade.skycademissions.missions.types;
 
 import net.skycade.SkycadeCore.Localization;
 import net.skycade.SkycadeCore.Localization.Message;
+import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.missions.Mission;
-import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.missions.Result;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -29,13 +27,12 @@ public class InventoryType extends MissionType {
     }
 
     @Override
-    public Result validate(Player player, ConfigurationSection params) {
+    public Result validate(Player player, List<Map<?, ?>> params) {
 
         boolean hasFailed = false;
-        List<Map<?, ?>> section = params.getMapList("items");
 
         PlayerInventory inventory = player.getInventory();
-        for (Map<?, ?> s : section) {
+        for (Map<?, ?> s : params) {
 
             Object type = s.getOrDefault("type", null);
             if (type == null) continue;
@@ -48,7 +45,7 @@ public class InventoryType extends MissionType {
 
             Short durability = null;
             obj = s.getOrDefault("durability", null);
-            if (obj != null) durability = ((Integer) obj).shortValue();
+            if (obj != null && ((Integer) obj).shortValue() != -1) durability = ((Integer) obj).shortValue();
 
             final Short finalDurability = durability;
 
@@ -81,17 +78,15 @@ public class InventoryType extends MissionType {
     }
 
     @Override
-    public Result validate(Player player, ConfigurationSection params, Mission mission) {
+    public Result validate(Player player, List<Map<?, ?>> params, Mission mission) {
         return validate(player, params);
     }
 
     @Override
-    public void postComplete(Player player, ConfigurationSection params) {
+    public void postComplete(Player player, List<Map<?, ?>> params) {
         super.postComplete(player, params);
 
-        List<Map<?, ?>> section = params.getMapList("items");
-
-        for (Map<?, ?> s : section) {
+        for (Map<?, ?> s : params) {
 
             Object type = s.getOrDefault("type", null);
             if (type == null) continue;
@@ -109,7 +104,7 @@ public class InventoryType extends MissionType {
 
             Short durability = null;
             obj = s.getOrDefault("durability", null);
-            if (obj != null) durability = ((Integer) obj).shortValue();
+            if (obj != null && ((Integer) obj).shortValue() != -1) durability = ((Integer) obj).shortValue();
 
             final Short finalDurability = durability;
 
@@ -134,8 +129,10 @@ public class InventoryType extends MissionType {
     @Override
     public int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
         int currentAmount = 0;
-        Player player = Bukkit.getPlayer(uuid);
-        List<Map<?, ?>> section = mission.getParams().getMapList("items");
+
+        MissionsUser user = MissionsUser.get(uuid);
+        Player player = user.getPlayer();
+        List<Map<?, ?>> section = mission.getParams();
 
         PlayerInventory inventory = player.getInventory();
         for (Map<?, ?> s : section) {
@@ -152,7 +149,7 @@ public class InventoryType extends MissionType {
 
                 Short durability = null;
                 obj = s.getOrDefault("durability", null);
-                if (obj != null) durability = ((Integer) obj).shortValue();
+                if (obj != null && ((Integer) obj).shortValue() != -1) durability = ((Integer) obj).shortValue();
 
                 final Short finalDurability = durability;
 
@@ -161,7 +158,7 @@ public class InventoryType extends MissionType {
                                 (finalDurability == null || finalDurability == e.getDurability()))
                         .mapToInt(ItemStack::getAmount).sum();
 
-                if (MissionManager.hasPlayerCompleted(uuid, mission)) {
+                if (user.hasPlayerCompleted(mission)) {
                     currentAmount = amount;
                 } else if (sum < amount) {
                     currentAmount = sum;

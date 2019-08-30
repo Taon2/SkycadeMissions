@@ -1,36 +1,38 @@
 package net.skycade.skycademissions.missions;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.skycade.SkycadeCore.CoreSettings;
 import net.skycade.SkycadeCore.guis.dynamicnew.DynamicGui;
+import net.skycade.SkycadeCore.utility.AsyncScheduler;
 import net.skycade.SkycadeCore.utility.ItemBuilder;
+import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.types.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 
-import java.io.File;
-import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class MissionManager implements Listener {
-
-    private static YamlConfiguration missionsYaml;
-    private static File missionsFile;
 
     private static SkycadeMissionsPlugin plugin = SkycadeMissionsPlugin.getInstance();
 
@@ -38,7 +40,7 @@ public class MissionManager implements Listener {
 
     private static TreeSet<Mission> missions = new TreeSet<>(Comparator.comparingInt(Mission::getPosition));
 
-    private static ConfigurationSection rewards;
+    private static Map<MissionLevel, List<Reward>> rewards = new HashMap<>();
 
     public static void addMissions(MissionType... types) {
         for (MissionType type : types) {
@@ -46,86 +48,75 @@ public class MissionManager implements Listener {
         }
     }
 
-    //Disabled because of huge loading lag
-//    private static final LoadingCache<UUID, Map<String, Long>> completedMissions = CacheBuilder.newBuilder()
-//            .build(new CacheLoader<UUID, Map<String, Long>>() {
-//                @Override
-//                public Map<String, Long> load(UUID uuid) {
-//                    Map<String, Long> map = new HashMap<>();
-//
-//                    File file = new File(plugin.getDataFolder(), "completed.yml");
-//                    if (!file.exists()) return map;
-//
-//                    YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
-//                    ConfigurationSection section = config.getConfigurationSection(uuid.toString());
-//                    if (section != null) {
-//                        for (String s : section.getKeys(false)) {
-//                            map.put(s, section.getLong(s));
-//                        }
-//                    }
-//
-//                    return map;
-//                }
-//            });
+    public static void loadMissions() {
+        JsonParser jsonParser = new JsonParser();
 
-    public static void load() {
-        missionsFile = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "missions.yml");
+        Bukkit.getScheduler().runTaskAsynchronously(SkycadeMissionsPlugin.getInstance(), () -> {
+            try (Connection connection = CoreSettings.getInstance().getConnection()) {
+                PreparedStatement statement = connection.prepareStatement("SELECT `mission`, `current`, `generatedon`, `dailymission`, `icon`, `displayname`, `description`, `params`, `level`, `type`, `position` FROM skycade_missions WHERE instance = ?");
+                statement.setString(1, CoreSettings.getInstance().getThisInstance());
+                ResultSet set = statement.executeQuery();
 
-        if (!missionsFile.exists()) {
-            missionsYaml = new YamlConfiguration();
-            save();
-        } else {
-            missionsYaml = YamlConfiguration.loadConfiguration(missionsFile);
-            save();
-        }
+                while (set.next()) {
+                    String handle = set.getString("mission");
+                    boolean isCurrent = set.getBoolean("current");
+                    long generatedOn = set.getLong("generatedon");
+                    boolean isDaily = set.getBoolean("dailymission");
+                    String icon = set.getString("icon");
+                    String displayName = set.getString("displayname");
+                    String lore = set.getString("description");
+                    if (lore != null) lore = ChatColor.translateAlternateColorCodes('&', lore);
 
-        ConfigurationSection main = missionsYaml.getConfigurationSection("missions");
-        rewards = missionsYaml.getConfigurationSection("rewards");
+                    List<String> missionLore;
 
-        if (main != null) {
-            for (String handle : main.getKeys(false)) {
-                try {
-                    ConfigurationSection mission = main.getConfigurationSection(handle);
-
-                    String typeString = mission.getString("type").toUpperCase();
-                    Type type;
-                    try {
-                        type = Type.valueOf(typeString);
-                    } catch (IllegalArgumentException e) {
-                        plugin.getLogger().log(Level.WARNING, "Unknown MissionType for '" + handle + "'", e);
-                        continue;
+                    if (lore != null) {
+                        missionLore = new ArrayList<>(Arrays.asList(lore.split("\n")));
+                    } else {
+                        missionLore = new ArrayList<>();
                     }
 
-                    String missionLevel = mission.getString("level", "EASY").toUpperCase();
-                    MissionLevel level;
-                    try {
-                        level = MissionLevel.valueOf(missionLevel);
-                    } catch (IllegalArgumentException e) {
-                        plugin.getLogger().log(Level.WARNING, "Unknown MissionLevel for '" + handle + "'", e);
-                        continue;
+                    String paramsJson = set.getString("params");
+                    List<Map<?, ?>> params = new ArrayList<>();
+                    for (Map.Entry<String, JsonElement> entry : jsonParser.parse(paramsJson).getAsJsonObject().entrySet()) {
+                        JsonObject jsonParams = entry.getValue().getAsJsonObject();
+
+                        String type;
+                        try {
+                            type = jsonParams.get("type").getAsString();
+                        } catch (Exception e) { continue; }
+
+                        int amount;
+                        try {
+                            amount = jsonParams.get("amount").getAsInt();
+                        } catch (Exception e) { continue; }
+
+                        short durability = -1;
+                        try {
+                            durability = jsonParams.get("durability").getAsShort();
+                        } catch (Exception ignored) { }
+
+                        Map<Object, Object> map = new HashMap<>();
+                        map.put("type", type);
+                        map.put("amount", amount);
+                        if (durability == -1)
+                            map.put("durability", durability);
+                        params.add(map);
                     }
 
-                    ConfigurationSection params = mission.getConfigurationSection("params");
+                    MissionLevel level = MissionLevel.valueOf(set.getString("level"));
+                    Type type = Type.valueOf(set.getString("type"));
+                    int position = set.getInt("position");
 
-                    String displayName = mission.getString("displayname");
-                    String icon = mission.getString("icon");
-                    boolean isDaily = mission.getBoolean("dailymission");
-
-                    List<String> lore = mission.getStringList("description").stream()
-                            .map(e -> ChatColor.translateAlternateColorCodes('&', e))
-                            .collect(Collectors.toList());
-
-                    int position = mission.getInt("position");
-                    long expiry = mission.getLong("expiry");
-
-                    missions.add(new Mission(isDaily, type, handle, displayName, params, level, icon, lore, position, expiry));
-                } catch (Exception e) {
-                    plugin.getLogger().log(Level.WARNING, "Couldn't load mission '" + handle + "'", e);
+                    missions.add(new Mission(isDaily, isCurrent, generatedOn, type, handle, displayName, params, level, icon, missionLore, position));
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-        }
+            new DailyMissionManager();
+            Bukkit.getPluginManager().registerEvents(new TypesListener(), plugin);
+        });
 
-        new DailyMissionManager();
+        loadRewards();
 
         new LandType();
         new InventoryType();
@@ -140,18 +131,49 @@ public class MissionManager implements Listener {
         new FishingType();
         new LevelType();
         new PlaytimeType();
-
-        loadCompletedConfig();
-
-        Bukkit.getPluginManager().registerEvents(new TypesListener(), plugin);
     }
 
-    private static void save() {
-        try {
-            missionsYaml.save(missionsFile);
-        } catch (IOException e) {
-            plugin.getLogger().log(Level.SEVERE, "Couldn't save missions yaml file.", e);
-        }
+    private static void loadRewards() {
+        Bukkit.getScheduler().runTaskAsynchronously(SkycadeMissionsPlugin.getInstance(), () -> {
+            try (Connection connection = CoreSettings.getInstance().getConnection()) {
+                PreparedStatement statement = connection.prepareStatement("SELECT `level`, `name`, `commands` FROM skycade_missions_rewards WHERE instance = ?");
+                statement.setString(1, CoreSettings.getInstance().getThisInstance());
+                ResultSet set = statement.executeQuery();
+
+                while (set.next()) {
+                    MissionLevel level = MissionLevel.valueOf(set.getString("level"));
+                    String name = set.getString("name");
+                    String commands = set.getString("commands");
+                    if (name != null) name = ChatColor.translateAlternateColorCodes('&', name);
+
+                    List<String> rewardDisplayName;
+
+                    if (name != null) {
+                        rewardDisplayName = new ArrayList<>(Arrays.asList(name.split("\n")));
+                    } else {
+                        rewardDisplayName = new ArrayList<>();
+                    }
+
+                    List<String> rewardCommands;
+
+                    if (name != null) {
+                        rewardCommands = new ArrayList<>(Arrays.asList(commands.split("\n")));
+                    } else {
+                        rewardCommands = new ArrayList<>();
+                    }
+
+                    Reward rewardData = new Reward(level, rewardDisplayName, rewardCommands);
+
+                    if (rewards.containsKey(level)) {
+                        rewards.get(level).add(rewardData);
+                    } else {
+                        rewards.put(level, new ArrayList<>(Collections.singleton(rewardData)));
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public static void openMissionGui(Player player) {
@@ -160,6 +182,7 @@ public class MissionManager implements Listener {
 
     private static void openMissionGui(Player player, int page) {
         DynamicGui missionsGui = new DynamicGui(ChatColor.translateAlternateColorCodes('&', "&c&lMissions"), 3);
+        MissionsUser user = MissionsUser.get(player.getUniqueId());
 
         int x = 0;
 
@@ -169,6 +192,7 @@ public class MissionManager implements Listener {
 
         int guiSlot = 11;
         for (Mission mission : missions) {
+
             if (mission.isDaily() && !daily.contains(mission.getHandle())) continue;
 
             ++x;
@@ -176,12 +200,11 @@ public class MissionManager implements Listener {
             if (x > 18 * page) break;
             ItemStack item;
 
-            List<Map<?, ?>> section = mission.getParams().getMapList("items");
+            List<Map<?, ?>> params = mission.getParams();
             String currentCount;
             ArrayList<String> countingLore = new ArrayList<>();
 
-            for (Map<?, ?> s : section) {
-
+            for (Map<?, ?> s : params) {
                 Object type = s.getOrDefault("type", null);
                 if (type == null) continue;
                 String countedThing = type.toString();
@@ -192,7 +215,7 @@ public class MissionManager implements Listener {
 
                 short durability = -1;
                 obj = s.getOrDefault("durability", null);
-                if (obj != null) durability = ((Integer) obj).shortValue();
+                if (obj != null) durability = ((Short) obj);
 
                 if (durability != -1) {
                     countedThing = countedThing + ":" + durability;
@@ -202,7 +225,7 @@ public class MissionManager implements Listener {
                 countingLore.add(currentCount);
             }
 
-            ArrayList <String> lore = new ArrayList<>();
+            List <String> lore = new ArrayList<>();
 
             lore.add(ChatColor.RED + "" + ChatColor.BOLD + mission.getLevel().toString());
             lore.addAll(mission.getLore());
@@ -213,7 +236,7 @@ public class MissionManager implements Listener {
                         .setDisplayName(ChatColor.AQUA + "" + ChatColor.BOLD + mission.getDisplayName())
                         .setLore(lore);
 
-                if (hasPlayerCompleted(player.getUniqueId(), mission))
+                if (user.hasPlayerCompleted(mission))
                     b = b.addEnchantment(Enchantment.DURABILITY, 10)
                             .setItemFlags(ItemFlag.values());
 
@@ -223,7 +246,7 @@ public class MissionManager implements Listener {
                         .setDisplayName(ChatColor.AQUA + "" + ChatColor.BOLD + mission.getDisplayName())
                         .setLore(lore);
 
-                if (hasPlayerCompleted(player.getUniqueId(), mission))
+                if (user.hasPlayerCompleted(mission))
                     b = b.addEnchantment(Enchantment.DURABILITY, 10)
                             .setItemFlags(ItemFlag.values());
 
@@ -236,7 +259,7 @@ public class MissionManager implements Listener {
 
         ItemBuilder rewardsItem = new ItemBuilder(new ItemStack(Material.NETHER_STAR, 1))
                 .setDisplayName(ChatColor.GOLD + "" + ChatColor.BOLD + "Rewards")
-                .setLore("Displays the rewards possible to win.");
+                .setLore("Displays the rewards you can win.");
         missionsGui.setItem(26, rewardsItem.build());
 
         missionsGui.open(player);
@@ -245,30 +268,23 @@ public class MissionManager implements Listener {
     private static void openRewardsGUI(Player player) {
         DynamicGui rewardsGui = new DynamicGui(ChatColor.translateAlternateColorCodes('&', "&c&lRewards"), 3);
 
-        ConfigurationSection rewards = MissionManager.getRewards();
+        Map<MissionLevel, List<Reward>> rewards = MissionManager.getRewards();
 
-        if (rewards.getKeys(false).size() <= 0) return;
+        if (rewards.size() <= 0) return;
 
         int guiSlot = 10;
-        for (String typeKey : rewards.getKeys(false)) {
+        for (MissionLevel levelKey : rewards.keySet()) {
             ItemStack item;
             ArrayList <String> lore = new ArrayList<>();
 
-            for (String rewardKey : rewards.getConfigurationSection(typeKey).getKeys(false)) {
-                List<String> rewardNames = rewards.getConfigurationSection(typeKey).getStringList(rewardKey + ".names").stream()
-                        .map(e -> ChatColor.translateAlternateColorCodes('&', e))
-                        .collect(Collectors.toList());
+            for (Reward reward : rewards.get(levelKey)) {
+                List<String> rewardNames = reward.getNames();
                 lore.addAll(rewardNames);
                 lore.add(ChatColor.GOLD + "-");
             }
 
-            //Sets the name for allthreecompleted section to a nicer looking name
-            if (typeKey.equals("allthreecompleted")){
-                typeKey = "ALL THREE";
-            }
-
             ItemBuilder b = new ItemBuilder(new ItemStack(Material.NETHER_STAR, 1))
-                    .setDisplayName(ChatColor.RED + "" + ChatColor.BOLD + typeKey.toUpperCase() + " Rewards")
+                    .setDisplayName(ChatColor.RED + "" + ChatColor.BOLD + levelKey.name().toUpperCase() + " Rewards")
                     .setLore(lore);
 
             item = b.build();
@@ -298,163 +314,26 @@ public class MissionManager implements Listener {
         }
     }
 
-    public static void addCounter(UUID uuid, Mission mission, String path, int count) {
-        YamlConfiguration conf = MissionManager.getCompletedConfig();
-
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
-        calendar.set(Calendar.HOUR, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-
-        long timeInMillis = calendar.getTimeInMillis();
-
-        boolean doesCountExist = conf.contains(uuid.toString() + ".counters." + mission.getHandle());
-        boolean isTimeEnabled = conf.getLong(uuid.toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
-
-        //Checks to see if there is an active counter within the last 24 hours
-        if ((!doesCountExist || !isTimeEnabled) && !hasPlayerCompleted(uuid, mission)) {
-            //Starts a new counter if there is not an active counter and the mission hasn't been completed
-            conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + path, count);
-            conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".activated", System.currentTimeMillis());
-        } else if (!hasPlayerCompleted(uuid, mission)){
-            //Increments the existing counter as long as the mission hasn't been completed
-            conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + path, count);
-        }
-
-        setCompletedConfig(conf);
-
-        //completedMissions.invalidate(uuid);
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onPlayerLogin(PlayerJoinEvent e) {
+        MissionsUser.add(e.getPlayer().getUniqueId(), new MissionsUser(e.getPlayer()));
     }
 
-    public static void addCounter(UUID uuid, Mission mission, String path, long count) {
-        YamlConfiguration conf = MissionManager.getCompletedConfig();
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onPlayerLogout(PlayerQuitEvent e) {
+        Player p = e.getPlayer();
+        MissionsUser user = MissionsUser.get(p.getUniqueId());
 
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
-        calendar.set(Calendar.HOUR, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-
-        long timeInMillis = calendar.getTimeInMillis();
-
-        boolean doesCountExist = conf.contains(uuid.toString() + ".counters." + mission.getHandle());
-        boolean isTimeEnabled = conf.getLong(uuid.toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
-
-        //Checks to see if there is an active counter within the last 24 hours
-        if ((!doesCountExist || !isTimeEnabled) && !hasPlayerCompleted(uuid, mission)) {
-            //Starts a new counter if there is not an active counter and the mission hasn't been completed
-            conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + path, count);
-            conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".activated", System.currentTimeMillis());
-        } else if (!hasPlayerCompleted(uuid, mission)){
-            //Increments the existing counter as long as the mission hasn't been completed
-            conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + path, count);
-        }
-
-        setCompletedConfig(conf);
-
-        //completedMissions.invalidate(uuid);
-    }
-
-    public static int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
-        YamlConfiguration conf = MissionManager.getCompletedConfig();
-        List<Map<?, ?>> section = mission.getParams().getMapList("items");
-        int currentCount = 0;
-
-        for (Map<?, ?> s : section) {
-            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
-            calendar.set(Calendar.HOUR, 0);
-            calendar.set(Calendar.MINUTE, 0);
-            calendar.set(Calendar.SECOND, 0);
-
-            long timeInMillis = calendar.getTimeInMillis();
-
-            boolean doesCountExist = conf.contains(uuid.toString() + ".counters." + mission.getHandle());
-            boolean isTimeEnabled = conf.getLong(uuid.toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
-
-            //Checks to see if there is an active counter within the last 24 hours
-            if (MissionManager.hasPlayerCompleted(uuid, mission)) {
-                //Returns max value if already completed
-                int amount = 1;
-                Object obj = s.getOrDefault("amount", null);
-                if (obj != null) amount = (Integer) obj;
-
-                return amount;
-            } else if ((!doesCountExist || !isTimeEnabled) && !MissionManager.hasPlayerCompleted(uuid, mission)) {
-                //Starts a new counter if there is not an active counter and the mission hasn't been completed
-                conf.set(uuid.toString() + ".counters." + mission.getHandle() + "." + countedThing, currentCount);
-                conf.set(uuid.toString() + ".counters." + mission.getHandle() + ".activated", System.currentTimeMillis());
-            } else {
-                //Returns the existing counter
-                currentCount = conf.getInt(uuid.toString() + ".counters." + mission.getHandle() + "." + countedThing);
-            }
-        }
-
-        MissionManager.setCompletedConfig(conf);
-
-        return currentCount;
-    }
-
-    static void completeMission(UUID uuid, Mission mission) {
-        YamlConfiguration conf = MissionManager.getCompletedConfig();
-
-        conf.set(uuid.toString() + "." + "counters." + mission.getHandle(), null);
-        conf.set(uuid.toString() + "." + mission.getHandle(), System.currentTimeMillis());
-
-        MissionManager.setCompletedConfig(conf);
-        MissionManager.saveCompletedConfig();
-
-        //completedMissions.invalidate(uuid);
-    }
-
-    public static boolean hasPlayerCompleted(UUID uuid, Mission mission) {
-        YamlConfiguration conf = MissionManager.getCompletedConfig();
-
-        //Map<String, Long> map = completedMissions.getUnchecked(uuid);
-
-        if (!conf.contains(uuid.toString())) {
-            return false;
-        }
-
-        if (conf.contains(uuid.toString())) {
-            if (!conf.contains(uuid.toString() + "." + mission.getHandle())) {
-                return false;
-            }
-
-            long timestamp = conf.getLong(uuid.toString() + "." + mission.getHandle());
-
-            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
-            calendar.set(Calendar.HOUR, 0);
-            calendar.set(Calendar.MINUTE, 0);
-            calendar.set(Calendar.SECOND, 0);
-
-            long timeInMillis = calendar.getTimeInMillis();
-            return timestamp > timeInMillis;
-        } else  {
-            return true;
-        }
-
-        //Disabled because of huge loading lag
-//        if (!map.containsKey(mission.getHandle())) return false;
-//
-//        if (mission.isDaily()) {
-//            Long timestamp = map.get(mission.getHandle());
-//
-//            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
-//            calendar.set(Calendar.HOUR, 0);
-//            calendar.set(Calendar.MINUTE, 0);
-//            calendar.set(Calendar.SECOND, 0);
-//
-//            long timeInMillis = calendar.getTimeInMillis();
-//            return timestamp > timeInMillis;
-//        } else {
-//            return true;
-//        }
+        user.updateCountsDatabase();
+        user.updateCompletedDatabase();
+        MissionsUser.remove(e.getPlayer().getUniqueId());
     }
 
     public static MissionType getType(Type type) {
         return types.getOrDefault(type, null);
     }
 
-    static ConfigurationSection getRewards() {
+    static Map<MissionLevel, List<Reward>> getRewards() {
         return rewards;
     }
 
@@ -471,32 +350,43 @@ public class MissionManager implements Listener {
         return null;
     }
 
-    private static File completedFile;
-    private static YamlConfiguration completedConfiguration;
+    static void updateMissionsDatabase() {
+        AsyncScheduler.runTask(SkycadeMissionsPlugin.getInstance(), () -> {
 
-    private static void loadCompletedConfig() {
-        completedFile = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "completed.yml");
+            try (Connection connection = CoreSettings.getInstance().getConnection()) {
+                String sql = "INSERT INTO skycade_missions (`instance`, `mission`, `current`, `generatedon`, `dailymission`, `icon`, `displayname`, `description`, `params`, `level`, `type`, `position`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                        "ON DUPLICATE KEY UPDATE current = VALUES(current), generatedon = VALUES(generatedon)";
+                PreparedStatement statement = connection.prepareStatement(sql);
+                missions.forEach((mission -> {
+                    try {
+                        statement.setString(1, CoreSettings.getInstance().getThisInstance());
+                        statement.setString(2, mission.getHandle());
+                        statement.setBoolean(3, mission.isCurrent());
+                        statement.setLong(4, mission.getGeneratedOn());
+                        statement.setBoolean(5, mission.isDaily());
+                        statement.setString(6, mission.getIcon().name());
+                        statement.setString(7, mission.getDisplayName());
+                        StringBuilder loreString = new StringBuilder();
+                        for (String line : mission.getLore()) {
+                            if (line != null) {
+                                loreString.append(line);
+                            }
+                        }
+                        statement.setString(8, loreString.toString());
+                        statement.setString(9, new Gson().toJson(mission.getParams()));
+                        statement.setString(10, mission.getLevel().name());
+                        statement.setString(11, mission.getType().name());
+                        statement.setInt(12, mission.getPosition());
 
-        if (!completedFile.exists()) {
-            completedConfiguration = new YamlConfiguration();
-        } else {
-            completedConfiguration = YamlConfiguration.loadConfiguration(completedFile);
-        }
-    }
-
-    public static YamlConfiguration getCompletedConfig() {
-        return completedConfiguration;
-    }
-
-    public static void setCompletedConfig(YamlConfiguration conf) {
-        completedConfiguration = conf;
-    }
-
-    public static void saveCompletedConfig() {
-        try {
-            completedConfiguration.save(completedFile);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+                        statement.addBatch();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }));
+                statement.executeBatch();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 }

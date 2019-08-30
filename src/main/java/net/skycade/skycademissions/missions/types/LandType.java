@@ -1,15 +1,14 @@
 package net.skycade.skycademissions.missions.types;
 
 import net.skycade.SkycadeCore.Localization;
+import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.missions.Mission;
-import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.missions.Result;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -31,13 +30,12 @@ public class LandType extends MissionType {
     }
 
     @Override
-    public Result validate(Player player, ConfigurationSection params) {
+    public Result validate(Player player, List<Map<?, ?>> params) {
 
-        List<Map<?, ?>> section = params.getMapList("items");
         final HashMap<Material, Integer> neededItem = new HashMap<Material, Integer>();
         final HashMap<EntityType, Integer> neededEntities = new HashMap<EntityType, Integer>();
 
-        for (Map<?, ?> s : section) {
+        for (Map<?, ?> s : params) {
             int amount = 1;
             Object obj = s.getOrDefault("amount", null);
             if (obj != null) amount = (Integer) obj;
@@ -124,7 +122,7 @@ public class LandType extends MissionType {
     }
 
     @Override
-    public Result validate(Player player, ConfigurationSection params, Mission mission) {
+    public Result validate(Player player, List<Map<?, ?>> params, Mission mission) {
         return validate(player, params);
     }
 
@@ -135,9 +133,11 @@ public class LandType extends MissionType {
 
     @Override
     public int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
+        MissionsUser user = MissionsUser.get(uuid);
+
         int currentAmount = 0;
         int amount = 1;
-        List<Map<?, ?>> section = mission.getParams().getMapList("items");
+        List<Map<?, ?>> section = mission.getParams();
         final HashMap<Material, Integer> neededItem = new HashMap<Material, Integer>();
         final HashMap<EntityType, Integer> neededEntities = new HashMap<EntityType, Integer>();
 
@@ -206,7 +206,7 @@ public class LandType extends MissionType {
             }
         }
 
-        if (MissionManager.hasPlayerCompleted(uuid, mission)) {
+        if (user.hasPlayerCompleted(mission)) {
             currentAmount = amount;
         } else if (!neededItem.isEmpty()) {
             for (Material missing : neededItem.keySet()) {

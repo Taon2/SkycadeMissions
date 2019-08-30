@@ -6,6 +6,7 @@ import net.skycade.SkycadeEnchants.events.SkycadeGenerateEnchantEvent;
 import net.skycade.SkycadeEnchants.events.SkycadeSnowballGunEvent;
 import net.skycade.SkycadeEnchants.events.SkycadeSwindlerEvent;
 import net.skycade.prisons.util.EnchantmentTypes;
+import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.DailyMissionManager;
 import net.skycade.skycademissions.missions.Mission;
@@ -13,7 +14,6 @@ import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycadeshop.impl.skycade.event.PostSellTransactionEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -71,7 +71,7 @@ public class TypesListener implements Listener {
     public void onEntityDamage(EntityDamageByEntityEvent e) {
         for (Mission mission : currentCountableMissions) {
             if (mission.getType() == Type.DAMAGE) {
-                List<Map<?, ?>> section = mission.getParams().getMapList("items");
+                List<Map<?, ?>> section = mission.getParams();
 
                 for (Map<?, ?> s : section) {
                     Object type = s.getOrDefault("type", null);
@@ -84,13 +84,15 @@ public class TypesListener implements Listener {
 
                     if (e.getDamager() != null && e.getDamager().getType() == EntityType.PLAYER && e.getEntity().getType() == entityType) {
                         Player p = (Player) e.getDamager();
+                        MissionsUser user = MissionsUser.get(p.getUniqueId());
+
                         int count = amount;
 
                         if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
                             count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) e.getDamage();
                         }
 
-                        MissionManager.addCounter(p.getUniqueId(), mission, e.getEntity().getType().toString(), count);
+                        user.addCounter(mission, e.getEntity().getType().toString(), count);
                     }
                 }
             }
@@ -102,7 +104,7 @@ public class TypesListener implements Listener {
     public void onEntityDeath(EntityDeathEvent e) {
         for (Mission mission : currentCountableMissions) {
             if (mission.getType() == Type.KILLS) {
-                List<Map<?, ?>> section = mission.getParams().getMapList("items");
+                List<Map<?, ?>> section = mission.getParams();
 
                 for (Map<?, ?> s : section) {
                     Object type = s.getOrDefault("type", null);
@@ -115,13 +117,15 @@ public class TypesListener implements Listener {
 
                         if (e.getEntity().getKiller() != null) {
                             Player p = e.getEntity().getKiller();
+                            MissionsUser user = MissionsUser.get(p.getUniqueId());
+
                             int count = amount;
 
                             if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
                                 count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + 1;
                             }
 
-                            MissionManager.addCounter(p.getUniqueId(), mission, type.toString(), count);
+                            user.addCounter(mission, type.toString(), count);
                         }
                     } else {
                         EntityType entityType = EntityType.valueOf(type.toString());
@@ -132,13 +136,15 @@ public class TypesListener implements Listener {
 
                         if (e.getEntity().getKiller() != null && e.getEntity().getKiller().getType() == EntityType.PLAYER && e.getEntity().getType() == entityType) {
                             Player p = e.getEntity().getKiller();
+                            MissionsUser user = MissionsUser.get(p.getUniqueId());
+
                             int count = amount;
 
                             if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, entityType.toString()) < amount) {
                                 count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, entityType.toString()) + 1;
                             }
 
-                            MissionManager.addCounter(p.getUniqueId(), mission, entityType.toString(), count);
+                            user.addCounter(mission, entityType.toString(), count);
                         }
                     }
                 }
@@ -147,11 +153,12 @@ public class TypesListener implements Listener {
     }
 
     //Listener for the MiningType
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    @EventHandler(/*ignoreCancelled = true, */priority = EventPriority.NORMAL)
     public void onBlockBreak(BlockBreakEvent e) {
         for (Mission mission : currentCountableMissions) {
             if (mission.getType() == Type.MINING) {
-                List<Map<?, ?>> section = mission.getParams().getMapList("items");
+
+                List<Map<?, ?>> section = mission.getParams();
 
                 for (Map<?, ?> s : section) {
                     Object type = s.getOrDefault("type", null);
@@ -165,13 +172,15 @@ public class TypesListener implements Listener {
 
                         if (e.getPlayer() != null) {
                             Player p = e.getPlayer();
+                            MissionsUser user = MissionsUser.get(p.getUniqueId());
+
                             int count = amount;
 
                             if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
                                 count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + 1;
                             }
 
-                            MissionManager.addCounter(p.getUniqueId(), mission, type.toString(), count);
+                            user.addCounter(mission, type.toString(), count);
                         }
                     }
                     //Handles missions that count specific block types
@@ -184,13 +193,15 @@ public class TypesListener implements Listener {
 
                         if (e.getPlayer() != null && e.getBlock().getType() == materialType) {
                             Player p = e.getPlayer();
+                            MissionsUser user = MissionsUser.get(p.getUniqueId());
+
                             int count = amount;
 
                             if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, materialType.toString()) < amount) {
                                 count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, materialType.toString()) + 1;
                             }
 
-                            MissionManager.addCounter(p.getUniqueId(), mission, materialType.toString(), count);
+                            user.addCounter(mission, materialType.toString(), count);
                         }
                     }
                 }
@@ -204,7 +215,7 @@ public class TypesListener implements Listener {
         for (Mission mission : currentCountableMissions) {
             if (mission.getType() == Type.FISHING) {
 
-                List<Map<?, ?>> section = mission.getParams().getMapList("items");
+                List<Map<?, ?>> section = mission.getParams();
 
                 for (Map<?, ?> s : section) {
                     Object type = s.getOrDefault("type", null);
@@ -218,13 +229,15 @@ public class TypesListener implements Listener {
 
                         if (e.getPlayer() != null && e.getCaught() != null && e.getCaught() instanceof Item) {
                             Player p = e.getPlayer();
+                            MissionsUser user = MissionsUser.get(p.getUniqueId());
+
                             int count = amount;
 
                             if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
                                 count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + 1;
                             }
 
-                            MissionManager.addCounter(p.getUniqueId(), mission, type.toString(), count);
+                            user.addCounter(mission, type.toString(), count);
                         }
                     }
                     //Handles missions that count specific item types
@@ -237,10 +250,12 @@ public class TypesListener implements Listener {
 
                         short durability = 0;
                         obj = s.getOrDefault("durability", null);
-                        if (obj != null) durability = ((Integer) obj).shortValue();
+                        if (obj != null && ((Integer) obj).shortValue() != -1) durability = ((Integer) obj).shortValue();
 
                         if (e.getPlayer() != null && e.getCaught() != null && e.getCaught() instanceof Item && ((Item) e.getCaught()).getItemStack().getType() == materialType && ((Item) e.getCaught()).getItemStack().getDurability() == durability) {
                             Player p = e.getPlayer();
+                            MissionsUser user = MissionsUser.get(p.getUniqueId());
+
                             int count = amount;
 
                             if (((Item) e.getCaught()).getItemStack().getDurability() == durability) {
@@ -249,7 +264,7 @@ public class TypesListener implements Listener {
                                 }
                             }
 
-                            MissionManager.addCounter(p.getUniqueId(), mission, materialType.toString() + ":" + durability, count);
+                            user.addCounter(mission, materialType.toString() + ":" + durability, count);
                         }
                     }
                 }
@@ -257,16 +272,17 @@ public class TypesListener implements Listener {
         }
     }
 
-    Map<UUID, Long> onlineMap = new HashMap<>();
+    private Map<UUID, Long> onlineMap = new HashMap<>();
 
     //Listener for the PlaytimeType
     @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
     public void onPlayerLogin(PlayerLoginEvent event) {
         for (Mission mission : currentCountableMissions) {
             if (mission.getType() == Type.PLAYTIME) {
-                YamlConfiguration conf = MissionManager.getCompletedConfig();
+                Player p = event.getPlayer();
+                MissionsUser user = MissionsUser.get(p.getUniqueId());
 
-                List<Map<?, ?>> section = mission.getParams().getMapList("items");
+                List<Map<?, ?>> section = mission.getParams();
 
                 for (Map<?, ?> s : section) {
                     Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
@@ -280,16 +296,15 @@ public class TypesListener implements Listener {
                     if (type == null) continue;
 
                     if (type.toString().equals("HOURS")) {
-                        boolean doesCountExist = conf.contains(event.getPlayer().getUniqueId().toString() + ".counters." + mission.getHandle());
-                        boolean isTimeEnabled = conf.getLong(event.getPlayer().getUniqueId().toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
+                        boolean doesCountExist = user.getCompleted().containsKey(mission.getHandle());
+                        boolean isTimeEnabled = user.getCompleted().get(mission.getHandle()) > timeInMillis;
 
                         if (!doesCountExist || !isTimeEnabled)
-                            MissionManager.addCounter(event.getPlayer().getUniqueId(), mission, type.toString(), 0);
+                            user.addLongCounter(mission, type.toString(), 0);
 
                         onlineMap.put(event.getPlayer().getUniqueId(), System.currentTimeMillis());
                     }
                 }
-                MissionManager.setCompletedConfig(conf);
             }
         }
     }
@@ -299,7 +314,7 @@ public class TypesListener implements Listener {
         for (Mission mission : currentCountableMissions) {
             if (mission.getType() == Type.PLAYTIME) {
 
-                List<Map<?, ?>> section = mission.getParams().getMapList("items");
+                List<Map<?, ?>> section = mission.getParams();
 
                 for (Map<?, ?> s : section) {
                     Object type = s.getOrDefault("type", null);
@@ -312,6 +327,8 @@ public class TypesListener implements Listener {
 
                         if (event.getPlayer() != null) {
                             Player p = event.getPlayer();
+                            MissionsUser user = MissionsUser.get(p.getUniqueId());
+
                             long count = amount*3600000;
 
                             Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
@@ -329,7 +346,7 @@ public class TypesListener implements Listener {
                                 count = (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString())*3600000) + addedOnlineTime;
                             }
 
-                            MissionManager.addCounter(p.getUniqueId(), mission, type.toString(), count);
+                            user.addLongCounter(mission, type.toString(), count);
                             onlineMap.remove(p.getUniqueId());
                         }
                     }
@@ -345,7 +362,7 @@ public class TypesListener implements Listener {
         public void onSkycadeShopSell(PostSellTransactionEvent event) {
             for (Mission mission : currentCountableMissions) {
                 if (mission.getType() == Type.SHOP) {
-                    List<Map<?, ?>> section = mission.getParams().getMapList("items");
+                    List<Map<?, ?>> section = mission.getParams();
 
                     for (Map<?, ?> s : section) {
                         Object type = s.getOrDefault("type", null);
@@ -359,13 +376,15 @@ public class TypesListener implements Listener {
 
                             if (event.getPlayer() != null) {
                                 Player p = event.getPlayer();
+                                MissionsUser user = MissionsUser.get(p.getUniqueId());
+
                                 int count = amount;
 
                                 if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
                                     count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) event.getMoneyGained();
                                 }
 
-                                MissionManager.addCounter(p.getUniqueId(), mission, type.toString(), count);
+                                user.addCounter(mission, type.toString(), count);
                             }
                         }
                     }
@@ -381,7 +400,7 @@ public class TypesListener implements Listener {
         public void onSkycadeCustomEnchantItem(SkycadeCustomEnchantItemEvent event) {
             for (Mission mission : currentCountableMissions) {
                 if (mission.getType() == Type.ENCHANT) {
-                    List<Map<?, ?>> section = mission.getParams().getMapList("items");
+                    List<Map<?, ?>> section = mission.getParams();
 
                     for (Map<?, ?> s : section) {
                         Object type = s.getOrDefault("type", null);
@@ -395,13 +414,15 @@ public class TypesListener implements Listener {
 
                             if (event.getPlayer() != null) {
                                 Player p = event.getPlayer();
+                                MissionsUser user = MissionsUser.get(p.getUniqueId());
+
                                 int count = amount;
 
                                 if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
                                     count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + 1;
                                 }
 
-                                MissionManager.addCounter(p.getUniqueId(), mission, type.toString(), count);
+                                user.addCounter(mission, type.toString(), count);
                             }
                         }
                         //Handles missions that count specific block types
@@ -428,13 +449,15 @@ public class TypesListener implements Listener {
 
                             if (event.getPlayer() != null && event.getEnchantments().size() > 0) {
                                 Player p = event.getPlayer();
+                                MissionsUser user = MissionsUser.get(p.getUniqueId());
+
                                 int count = amount;
 
                                 if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, handle) < amount) {
                                     count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, handle) + 1;
                                 }
 
-                                MissionManager.addCounter(p.getUniqueId(), mission, handle, count);
+                                user.addCounter(mission, handle, count);
                             }
                         }
                     }
@@ -447,7 +470,7 @@ public class TypesListener implements Listener {
         public void onSkycadeEnchantGenerate(SkycadeGenerateEnchantEvent event) {
             for (Mission mission : currentCountableMissions) {
                 if (mission.getType() == Type.GENERATE) {
-                    List<Map<?, ?>> section = mission.getParams().getMapList("items");
+                    List<Map<?, ?>> section = mission.getParams();
 
                     for (Map<?, ?> s : section) {
                         Object type = s.getOrDefault("type", null);
@@ -461,13 +484,15 @@ public class TypesListener implements Listener {
 
                             if (event.getPlayer() != null) {
                                 Player p = event.getPlayer();
+                                MissionsUser user = MissionsUser.get(p.getUniqueId());
+
                                 int count = amount;
 
                                 if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
                                     count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + 1;
                                 }
 
-                                MissionManager.addCounter(p.getUniqueId(), mission, type.toString(), count);
+                                user.addCounter(mission, type.toString(), count);
                             }
                         }
                     }
@@ -480,7 +505,7 @@ public class TypesListener implements Listener {
         public void onSkycadeSwindle(SkycadeSwindlerEvent event) {
             for (Mission mission : currentCountableMissions) {
                 if (mission.getType() == Type.SWINDLE) {
-                    List<Map<?, ?>> section = mission.getParams().getMapList("items");
+                    List<Map<?, ?>> section = mission.getParams();
 
                     for (Map<?, ?> s : section) {
                         Object type = s.getOrDefault("type", null);
@@ -494,13 +519,15 @@ public class TypesListener implements Listener {
 
                             if (event.getPlayer() != null) {
                                 Player p = event.getPlayer();
+                                MissionsUser user = MissionsUser.get(p.getUniqueId());
+
                                 int count = amount;
 
                                 if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
                                     count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) event.getAmount();
                                 }
 
-                                MissionManager.addCounter(p.getUniqueId(), mission, type.toString(), count);
+                                user.addCounter(mission, type.toString(), count);
                             }
                         }
                     }
@@ -513,7 +540,7 @@ public class TypesListener implements Listener {
         public void onSkycadeSnowballHit(SkycadeSnowballGunEvent event) {
             for (Mission mission : currentCountableMissions) {
                 if (mission.getType() == Type.SNOWBALLGUN) {
-                    List<Map<?, ?>> section = mission.getParams().getMapList("items");
+                    List<Map<?, ?>> section = mission.getParams();
 
                     for (Map<?, ?> s : section) {
                         Object type = s.getOrDefault("type", null);
@@ -528,10 +555,11 @@ public class TypesListener implements Listener {
                             if (event.getShooter() != null && event.getTarget() != null) {
                                 Player shooter = event.getShooter();
                                 Player target = event.getTarget();
+                                MissionsUser user = MissionsUser.get(shooter.getUniqueId());
+
                                 int count = amount;
 
                                 if (MissionManager.getType(mission.getType()).getCurrentCount(shooter.getUniqueId(), mission, type.toString()) < amount) {
-                                    YamlConfiguration conf = MissionManager.getCompletedConfig();
 
                                     Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
                                     calendar.set(Calendar.HOUR, 0);
@@ -540,30 +568,14 @@ public class TypesListener implements Listener {
 
                                     long timeInMillis = calendar.getTimeInMillis();
 
-                                    boolean doesHitPlayersExist = conf.contains(event.getShooter().getUniqueId().toString() + ".counters." + mission.getHandle() + ".hitPlayers");
-                                    boolean isTimeEnabled = conf.getLong(shooter.getUniqueId().toString() + ".counters." + mission.getHandle() + ".activated") > timeInMillis;
-                                    List<String> hitPlayers = new ArrayList<>();
-
-                                    //Resets the hitPlayers list if the mission is not current
-                                    if (doesHitPlayersExist && !isTimeEnabled) {
-                                        conf.set(event.getShooter().getUniqueId().toString() + ".counters." + mission.getHandle() + ".hitPlayers", hitPlayers);
-                                    }
-
-                                    if (doesHitPlayersExist && isTimeEnabled)
-                                        hitPlayers.addAll(conf.getStringList(event.getShooter().getUniqueId().toString() + ".counters." + mission.getHandle() + ".hitPlayers"));
-
                                     //If the player has already been hit, return
-                                    if (hitPlayers.contains(target.getUniqueId().toString())) return;
-                                    hitPlayers.add(target.getUniqueId().toString());
-                                    conf.set(event.getShooter().getUniqueId().toString() + ".counters." + mission.getHandle() + ".hitPlayers", hitPlayers);
-
-                                    MissionManager.setCompletedConfig(conf);
+                                    if (user.getHitWithSnowball().contains(target.getUniqueId())) return;
+                                    user.addHitWithSnowball(target.getUniqueId());
 
                                     count = MissionManager.getType(mission.getType()).getCurrentCount(shooter.getUniqueId(), mission, type.toString()) + 1;
                                 }
 
-
-                                MissionManager.addCounter(shooter.getUniqueId(), mission, type.toString(), count);
+                                user.addCounter(mission, type.toString(), count);
                             }
                         }
                     }

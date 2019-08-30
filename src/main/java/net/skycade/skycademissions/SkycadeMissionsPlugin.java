@@ -22,7 +22,7 @@ public class SkycadeMissionsPlugin extends SkycadePlugin {
     public void onEnable() {
         super.onEnable();
 
-        MissionManager.load();
+        MissionManager.loadMissions();
 
         Bukkit.getPluginManager().registerEvents(new MissionManager(), this);
 
@@ -33,7 +33,6 @@ public class SkycadeMissionsPlugin extends SkycadePlugin {
 
     @Override
     public void onDisable() {
-        MissionManager.saveCompletedConfig();
         super.onDisable();
     }
 }

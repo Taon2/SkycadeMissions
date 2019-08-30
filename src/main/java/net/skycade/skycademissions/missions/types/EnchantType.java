@@ -1,10 +1,9 @@
 package net.skycade.skycademissions.missions.types;
 
 import net.skycade.SkycadeCore.Localization;
+import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.missions.Mission;
-import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.missions.Result;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import java.util.List;
@@ -23,18 +22,16 @@ public class EnchantType extends MissionType {
     }
 
     @Override
-    public Result validate(Player player, ConfigurationSection params) {
+    public Result validate(Player player, List<Map<?, ?>> params) {
         return new Result(Result.Type.FAILURE);
     }
 
     @Override
-    public Result validate(Player player, ConfigurationSection params, Mission miss) {
+    public Result validate(Player player, List<Map<?, ?>> params, Mission miss) {
 
         boolean hasFailed = false;
 
-        List<Map<?, ?>> section = params.getMapList("items");
-
-        for (Map<?, ?> s : section) {
+        for (Map<?, ?> s : params) {
 
             Object type = s.getOrDefault("type", null);
             if (type == null) continue;
@@ -65,6 +62,8 @@ public class EnchantType extends MissionType {
 
     @Override
     public int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
-        return MissionManager.getCurrentCount(uuid, mission, countedThing);
+        MissionsUser user = MissionsUser.get(uuid);
+
+        return user.getCurrentCount(mission, countedThing);
     }
 }

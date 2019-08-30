@@ -1,11 +1,10 @@
 package net.skycade.skycademissions.missions.types;
 
 import net.skycade.SkycadeCore.Localization;
+import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.missions.Mission;
-import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.missions.Result;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import java.util.List;
@@ -24,18 +23,16 @@ public class LevelType extends MissionType {
     }
 
     @Override
-    public Result validate(Player player, ConfigurationSection params) {
+    public Result validate(Player player, List<Map<?, ?>> params) {
         return new Result(Result.Type.FAILURE);
     }
 
     @Override
-    public Result validate(Player player, ConfigurationSection params, Mission miss) {
+    public Result validate(Player player, List<Map<?, ?>> params, Mission miss) {
 
         boolean hasFailed = false;
 
-        List<Map<?, ?>> section = params.getMapList("items");
-
-        for (Map<?, ?> s : section) {
+        for (Map<?, ?> s : params) {
 
             Object type = s.getOrDefault("type", null);
             if (type == null) continue;
@@ -61,12 +58,10 @@ public class LevelType extends MissionType {
     }
 
     @Override
-    public void postComplete(Player player, ConfigurationSection params) {
+    public void postComplete(Player player, List<Map<?, ?>> params) {
         super.postComplete(player, params);
 
-        List<Map<?, ?>> section = params.getMapList("items");
-
-        for (Map<?, ?> s : section) {
+        for (Map<?, ?> s : params) {
             Object type = s.getOrDefault("type", null);
             if (type == null) continue;
 
@@ -89,7 +84,9 @@ public class LevelType extends MissionType {
     public int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
         int currentAmount = 0;
         Player player = Bukkit.getPlayer(uuid);
-        List<Map<?, ?>> section = mission.getParams().getMapList("items");
+        MissionsUser user = MissionsUser.get(uuid);
+
+        List<Map<?, ?>> section = mission.getParams();
 
         for (Map<?, ?> s : section) {
             Object type = s.getOrDefault("type", null);
@@ -102,7 +99,7 @@ public class LevelType extends MissionType {
             if (type.toString().equalsIgnoreCase("LEVELS")) {
                 currentAmount = player.getLevel();
 
-                if (MissionManager.hasPlayerCompleted(uuid, mission) || currentAmount > amount) {
+                if (user.hasPlayerCompleted(mission) || currentAmount > amount) {
                     currentAmount = amount;
                 }
             }

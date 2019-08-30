@@ -1,17 +1,12 @@
 package net.skycade.skycademissions.missions;
 
 import net.skycade.skycademissions.SkycadeMissionsPlugin;
-import net.skycade.skycademissions.missions.types.TypesListener;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static net.skycade.skycademissions.util.Messages.NEWDAILYMISSIONS;
@@ -24,31 +19,27 @@ public class DailyMissionManager extends BukkitRunnable {
     private static DailyMissionManager instance;
 
     DailyMissionManager() {
+        run();
         if (instance == null) {
             runTaskTimer(SkycadeMissionsPlugin.getInstance(), 1L, 1200L);
             instance = this;
         }
-        run();
     }
 
     @Override
     public void run() {
-        File file = new File(SkycadeMissionsPlugin.getInstance().getDataFolder(), "daily.yml");
-
         if (lastGenerated == 0L) {
-            if (file.exists()) {
-                YamlConfiguration conf = YamlConfiguration.loadConfiguration(file);
-                lastGenerated = conf.getLong("generatedOn", 0);
-                current = conf.getStringList("current");
-            }
+            MissionManager.getAllDaily().forEach(mission -> {
+                if (mission.getGeneratedOn() != 0 && mission.isCurrent()) {
+                    lastGenerated = mission.getGeneratedOn();
+                    current.add(mission.getHandle());
+                }
+            });
         }
 
         Calendar cal = Calendar.getInstance();
-//        cal.set(Calendar.HOUR, 0);
-//        cal.set(Calendar.MINUTE, 0);
-//        cal.set(Calendar.SECOND, 0);
-
         long today = cal.getTimeInMillis();
+
         if (lastGenerated + 86400000 < today) {
             // generate, persist
             List<Mission> daily = MissionManager.getAllDaily();
@@ -63,29 +54,29 @@ public class DailyMissionManager extends BukkitRunnable {
                     mission = daily.get(num);
                 } while (current.contains(mission.getHandle()) || oldMissions.contains(mission.getHandle()));
 
-
                 current.add(mission.getHandle());
             }
 
-            YamlConfiguration config = new YamlConfiguration();
-            config.set("generatedOn", System.currentTimeMillis());
+            current.stream().map(MissionManager::getMissionFromName).filter(Objects::nonNull).forEach(mission -> {
+                mission.setGeneratedOn(System.currentTimeMillis());
+                mission.setCurrent(true);
+            });
+
+            oldMissions.stream().map(MissionManager::getMissionFromName).filter(Objects::nonNull).forEach(mission -> {
+                mission.setGeneratedOn(0);
+                mission.setCurrent(false);
+            });
+
             lastGenerated = System.currentTimeMillis();
-            config.set("current", current);
-
-            try {
-                config.save(file);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-            TypesListener.loadCurrentCountableMissions();
+            MissionManager.updateMissionsDatabase();
 
             NEWDAILYMISSIONS.broadcast();
-            Bukkit.getLogger().info(ChatColor.translateAlternateColorCodes('&', NEWDAILYMISSIONS.toString()));
         }
     }
 
     public static List<String> getCurrent() {
         return current;
     }
+
+    public static long getLastGenerated() { return lastGenerated;}
 }
