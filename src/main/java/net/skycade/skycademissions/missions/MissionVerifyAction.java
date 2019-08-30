@@ -46,6 +46,9 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
         } else {
             if (result.getMessage() != null) p.sendMessage(result.getMessage());
         }
+
+        user.updateCountsDatabase();
+        user.updateCompletedDatabase();
     }
 
     private void giveRewards(Player p) {
