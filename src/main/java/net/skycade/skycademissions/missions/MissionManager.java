@@ -98,7 +98,7 @@ public class MissionManager implements Listener {
                         Map<Object, Object> map = new HashMap<>();
                         map.put("type", type);
                         map.put("amount", amount);
-                        if (durability == -1)
+                        if (durability != -1)
                             map.put("durability", durability);
                         params.add(map);
                     }
@@ -218,7 +218,7 @@ public class MissionManager implements Listener {
                 if (obj != null) durability = ((Short) obj);
 
                 if (durability != -1) {
-                    countedThing = countedThing + ":" + durability;
+                    countedThing = countedThing + "|" + durability;
                 }
 
                 currentCount = ChatColor.GREEN + countedThing + ": " + ChatColor.AQUA + MissionManager.getType(mission.getType()).getCurrentCount(player.getUniqueId(), mission, countedThing) + (ChatColor.RED + "/") + ChatColor.AQUA + amount;
