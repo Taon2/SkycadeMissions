@@ -44,7 +44,7 @@ public class PlaytimeType extends MissionType {
             if (current < amount*3600000) {
                 hasFailed = true;
                 player.sendMessage(NOT_ENOUGH_PLAYTIME.getMessage(player)
-                        .replaceAll("%val%", (amount - current) + "")
+                        .replaceAll("%val%", (amount - current/3600000) + "")
                         .replaceAll("%time%", type.toString().toLowerCase() + "")
                 );
             }

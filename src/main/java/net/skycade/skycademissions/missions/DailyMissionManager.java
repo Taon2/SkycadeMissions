@@ -1,6 +1,8 @@
 package net.skycade.skycademissions.missions;
 
 import net.skycade.skycademissions.SkycadeMissionsPlugin;
+import net.skycade.skycademissions.events.MissionsRefreshEvent;
+import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
@@ -19,6 +21,9 @@ public class DailyMissionManager extends BukkitRunnable {
     private static DailyMissionManager instance;
 
     DailyMissionManager() {
+        //Only refresh on servers that have that to true (the spawn server rather than island01 for example)
+        if (SkycadeMissionsPlugin.getInstance().getConfig() != null && !SkycadeMissionsPlugin.getInstance().getConfig().getBoolean("refresh-missions")) return;
+
         run();
         if (instance == null) {
             runTaskTimer(SkycadeMissionsPlugin.getInstance(), 1L, 1200L);
@@ -72,10 +77,17 @@ public class DailyMissionManager extends BukkitRunnable {
 
             NEWDAILYMISSIONS.broadcast();
         }
+
+        MissionsRefreshEvent missionsRefreshEvent = new MissionsRefreshEvent(current);
+        Bukkit.getServer().getPluginManager().callEvent(missionsRefreshEvent);
     }
 
     public static List<String> getCurrent() {
         return current;
+    }
+
+    public static void setCurrent(List<String> newCurrent) {
+        current = newCurrent;
     }
 
     public static long getLastGenerated() { return lastGenerated;}
