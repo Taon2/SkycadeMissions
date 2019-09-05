@@ -21,14 +21,13 @@ public class DailyMissionManager extends BukkitRunnable {
     private static DailyMissionManager instance;
 
     DailyMissionManager() {
+        if (instance == null) instance = this;
+
         //Only refresh on servers that have that to true (the spawn server rather than island01 for example)
         if (SkycadeMissionsPlugin.getInstance().getConfig() != null && !SkycadeMissionsPlugin.getInstance().getConfig().getBoolean("refresh-missions")) return;
 
         run();
-        if (instance == null) {
-            runTaskTimer(SkycadeMissionsPlugin.getInstance(), 1L, 1200L);
-            instance = this;
-        }
+        runTaskTimer(SkycadeMissionsPlugin.getInstance(), 1L, 1200L);
     }
 
     @Override
@@ -86,7 +85,11 @@ public class DailyMissionManager extends BukkitRunnable {
         return current;
     }
 
-    public static void setCurrent(List<String> newCurrent) {
+    public static DailyMissionManager getInstance() {
+        return instance;
+    }
+
+    public void setCurrent(List<String> newCurrent) {
         current = newCurrent;
     }
 
