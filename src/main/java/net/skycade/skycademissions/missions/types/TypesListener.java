@@ -58,7 +58,7 @@ public class TypesListener implements Listener {
     }
 
     public static void loadCurrentCountableMissions() {
-        for (String handle : DailyMissionManager.getCurrent()) {
+        for (String handle : DailyMissionManager.getInstance().getCurrent()) {
             Mission mission = MissionManager.getMissionFromName(handle);
             if (mission != null && countableTypes.contains(mission.getType())) {
                 currentCountableMissions.add(mission);

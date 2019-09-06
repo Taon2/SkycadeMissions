@@ -71,7 +71,7 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
 
     //If the player has completed all 3 missions for that day, then give them an additional bigger reward
     private void checkAllThree(Player p) {
-        List<String> daily = DailyMissionManager.getCurrent();
+        List<String> daily = DailyMissionManager.getInstance().getCurrent();
         MissionsUser user = MissionsUser.get(p.getUniqueId());
 
         for (String name : daily) {

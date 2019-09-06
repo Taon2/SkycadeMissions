@@ -81,7 +81,7 @@ public class MissionsUser {
                     missionHandle = set.getString("mission");
 
                     //checks if the mission exists, and if the mission is current
-                    if (missionHandle == null || MissionManager.getMissionFromName(missionHandle) == null || !DailyMissionManager.getCurrent().contains(missionHandle)) continue;
+                    if (missionHandle == null || MissionManager.getMissionFromName(missionHandle) == null || !DailyMissionManager.getInstance().getCurrent().contains(missionHandle)) continue;
                     String counted = set.getString("counted");
                     long timestamp = set.getLong("timestamp");
                     int count = set.getInt("count");
@@ -333,7 +333,7 @@ public class MissionsUser {
 
         Count(String counted, int count) {
             this.counted = counted;
-            this.timestamp = DailyMissionManager.getLastGenerated() + 86400000;
+            this.timestamp = DailyMissionManager.getInstance().getLastGenerated() + 86400000;
             this.count = count;
         }
 

@@ -81,7 +81,7 @@ public class DailyMissionManager extends BukkitRunnable {
         Bukkit.getServer().getPluginManager().callEvent(missionsRefreshEvent);
     }
 
-    public static List<String> getCurrent() {
+    public List<String> getCurrent() {
         return current;
     }
 
@@ -93,5 +93,5 @@ public class DailyMissionManager extends BukkitRunnable {
         current = newCurrent;
     }
 
-    public static long getLastGenerated() { return lastGenerated;}
+    public long getLastGenerated() { return lastGenerated;}
 }

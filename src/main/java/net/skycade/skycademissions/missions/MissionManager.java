@@ -186,9 +186,9 @@ public class MissionManager implements Listener {
 
         int x = 0;
 
-        if (DailyMissionManager.getCurrent().size() <= 0) return;
+        if (DailyMissionManager.getInstance().getCurrent().size() <= 0) return;
 
-        List<String> daily = DailyMissionManager.getCurrent();
+        List<String> daily = DailyMissionManager.getInstance().getCurrent();
 
         int guiSlot = 11;
         for (Mission mission : missions) {
