@@ -45,7 +45,7 @@ public class InventoryType extends MissionType {
 
             Short durability = null;
             obj = s.getOrDefault("durability", null);
-            if (obj != null && ((Integer) obj).shortValue() != -1) durability = ((Integer) obj).shortValue();
+            if (obj != null && (Short) obj != -1) durability = (Short) obj;
 
             final Short finalDurability = durability;
 
