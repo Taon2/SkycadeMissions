@@ -5,7 +5,6 @@ import net.skycade.SkycadeCore.Localization.Message;
 import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.missions.Mission;
 import net.skycade.skycademissions.missions.Result;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -129,20 +128,16 @@ public class InventoryType extends MissionType {
 
     @Override
     public int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
-        Bukkit.getLogger().info(countedThing);
         int currentAmount = 0;
 
         MissionsUser user = MissionsUser.get(uuid);
         Player player = user.getPlayer();
         String[] counted = countedThing.split(":", 2);
 
-        Bukkit.getLogger().info(Arrays.toString(counted));
-
         List<Map<?, ?>> section = mission.getParams();
 
         PlayerInventory inventory = player.getInventory();
         for (Map<?, ?> s : section) {
-            Bukkit.getLogger().info(s.toString());
             Object type = s.getOrDefault("type", null);
             if (type == null) continue;
 
