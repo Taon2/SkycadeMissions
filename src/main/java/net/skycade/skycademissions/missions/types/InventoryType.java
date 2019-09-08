@@ -5,6 +5,7 @@ import net.skycade.SkycadeCore.Localization.Message;
 import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.missions.Mission;
 import net.skycade.skycademissions.missions.Result;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -104,7 +105,7 @@ public class InventoryType extends MissionType {
 
             Short durability = null;
             obj = s.getOrDefault("durability", null);
-            if (obj != null && ((Integer) obj).shortValue() != -1) durability = ((Integer) obj).shortValue();
+            if (obj != null && (Short) obj != -1) durability = (Short) obj;
 
             final Short finalDurability = durability;
 
@@ -128,43 +129,49 @@ public class InventoryType extends MissionType {
 
     @Override
     public int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
+        Bukkit.getLogger().info(countedThing);
         int currentAmount = 0;
 
         MissionsUser user = MissionsUser.get(uuid);
         Player player = user.getPlayer();
+        String[] counted = countedThing.split(":", 2);
+
+        Bukkit.getLogger().info(Arrays.toString(counted));
+
         List<Map<?, ?>> section = mission.getParams();
 
         PlayerInventory inventory = player.getInventory();
         for (Map<?, ?> s : section) {
+            Bukkit.getLogger().info(s.toString());
             Object type = s.getOrDefault("type", null);
             if (type == null) continue;
 
-            if (type.toString().equals(countedThing)) {
+            if (!type.toString().equals(counted[0])) continue;
 
-                Material material = Material.valueOf(type.toString().toUpperCase());
+            Material material = Material.valueOf(type.toString().toUpperCase());
 
-                int amount = 1;
-                Object obj = s.getOrDefault("amount", null);
-                if (obj != null) amount = (Integer) obj;
+            int amount = 1;
+            Object obj = s.getOrDefault("amount", null);
+            if (obj != null) amount = (Integer) obj;
 
-                Short durability = null;
-                obj = s.getOrDefault("durability", null);
-                if (obj != null && ((Integer) obj).shortValue() != -1) durability = ((Integer) obj).shortValue();
+            Short durability = null;
+            obj = s.getOrDefault("durability", null);
+            if (obj != null && (Short) obj != -1) durability = (Short) obj;
 
-                final Short finalDurability = durability;
+            final Short finalDurability = durability;
+            if (finalDurability != null && !finalDurability.toString().equals(counted[1])) continue;
 
-                int sum = Arrays.stream(inventory.getContents())
-                        .filter(e -> e != null && e.getType() == material &&
-                                (finalDurability == null || finalDurability == e.getDurability()))
-                        .mapToInt(ItemStack::getAmount).sum();
+            int sum = Arrays.stream(inventory.getContents())
+                    .filter(e -> e != null && e.getType() == material &&
+                            (finalDurability == null || finalDurability == e.getDurability()))
+                    .mapToInt(ItemStack::getAmount).sum();
 
-                if (user.hasPlayerCompleted(mission)) {
-                    currentAmount = amount;
-                } else if (sum < amount) {
-                    currentAmount = sum;
-                } else {
-                    currentAmount = amount;
-                }
+            if (user.hasPlayerCompleted(mission)) {
+                currentAmount = amount;
+            } else if (sum < amount) {
+                currentAmount = sum;
+            } else {
+                currentAmount = amount;
             }
         }
 

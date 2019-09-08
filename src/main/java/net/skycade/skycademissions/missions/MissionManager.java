@@ -218,7 +218,7 @@ public class MissionManager implements Listener {
                 if (obj != null) durability = ((Short) obj);
 
                 if (durability != -1) {
-                    countedThing = countedThing + "|" + durability;
+                    countedThing = countedThing + ":" + durability;
                 }
 
                 currentCount = ChatColor.GREEN + countedThing + ": " + ChatColor.AQUA + MissionManager.getType(mission.getType()).getCurrentCount(player.getUniqueId(), mission, countedThing) + (ChatColor.RED + "/") + ChatColor.AQUA + amount;
