@@ -24,7 +24,6 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerFishEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.*;
@@ -272,14 +271,12 @@ public class TypesListener implements Listener {
         }
     }
 
-    private Map<UUID, Long> onlineMap = new HashMap<>();
+    private static Map<UUID, Long> onlineMap = new HashMap<>();
 
     //Listener for the PlaytimeType
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onPlayerLogin(PlayerLoginEvent event) {
+    public static void onPlayerLogin(Player p) {
         for (Mission mission : currentCountableMissions) {
             if (mission.getType() == Type.PLAYTIME) {
-                Player p = event.getPlayer();
                 MissionsUser user = MissionsUser.get(p.getUniqueId());
 
                 List<Map<?, ?>> section = mission.getParams();
@@ -290,26 +287,27 @@ public class TypesListener implements Listener {
                     calendar.set(Calendar.MINUTE, 0);
                     calendar.set(Calendar.SECOND, 0);
 
-                    long timeInMillis = calendar.getTimeInMillis();
-
                     Object type = s.getOrDefault("type", null);
                     if (type == null) continue;
 
                     if (type.toString().equals("HOURS")) {
-                        boolean doesCountExist = user.getCompleted().containsKey(mission.getHandle());
-                        boolean isTimeEnabled = user.getCompleted().get(mission.getHandle()) > timeInMillis;
+                        boolean doesCountExist = false;
+                        for (MissionsUser.Count missionCount : user.getCounts().get(mission.getHandle())) {
+                            if (!missionCount.getCounted().equals(type.toString())) continue;
+                            doesCountExist = true;
+                        }
 
-                        if (!doesCountExist || !isTimeEnabled)
+                        if (!doesCountExist && !user.hasPlayerCompleted(mission))
                             user.addLongCounter(mission, type.toString(), 0);
 
-                        onlineMap.put(event.getPlayer().getUniqueId(), System.currentTimeMillis());
+                        onlineMap.put(p.getUniqueId(), System.currentTimeMillis());
                     }
                 }
             }
         }
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     public void onPlayerLogout(PlayerQuitEvent event) {
         for (Mission mission : currentCountableMissions) {
             if (mission.getType() == Type.PLAYTIME) {

@@ -314,12 +314,12 @@ public class MissionManager implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerLogin(PlayerJoinEvent e) {
         MissionsUser.add(e.getPlayer().getUniqueId(), new MissionsUser(e.getPlayer()));
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerLogout(PlayerQuitEvent e) {
         Player p = e.getPlayer();
         MissionsUser user = MissionsUser.get(p.getUniqueId());

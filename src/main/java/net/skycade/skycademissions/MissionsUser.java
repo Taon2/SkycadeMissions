@@ -6,6 +6,7 @@ import net.skycade.SkycadeCore.utility.AsyncScheduler;
 import net.skycade.skycademissions.missions.DailyMissionManager;
 import net.skycade.skycademissions.missions.Mission;
 import net.skycade.skycademissions.missions.MissionManager;
+import net.skycade.skycademissions.missions.types.TypesListener;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -105,24 +106,26 @@ public class MissionsUser {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-        });
 
-        Bukkit.getScheduler().runTaskAsynchronously(SkycadeMissionsPlugin.getInstance(), () -> {
-            try (Connection connection = CoreSettings.getInstance().getConnection()) {
-                PreparedStatement statement = connection.prepareStatement("SELECT `mission`, `timestamp` FROM skycade_missions_completed WHERE uuid = ? AND instance = ? AND (season IS NULL OR season = ?)");
-                statement.setString(1, player.getUniqueId().toString());
-                statement.setString(2, CoreSettings.getInstance().getThisInstance());
-                statement.setString(3, CoreSettings.getInstance().getSeason());
-                ResultSet set = statement.executeQuery();
-                while (set.next()) {
-                    String missionHandle = set.getString("mission");
-                    long timestamp = set.getLong("timestamp");
+            Bukkit.getScheduler().runTaskAsynchronously(SkycadeMissionsPlugin.getInstance(), () -> {
+                try (Connection connection = CoreSettings.getInstance().getConnection()) {
+                    PreparedStatement statement = connection.prepareStatement("SELECT `mission`, `timestamp` FROM skycade_missions_completed WHERE uuid = ? AND instance = ? AND (season IS NULL OR season = ?)");
+                    statement.setString(1, player.getUniqueId().toString());
+                    statement.setString(2, CoreSettings.getInstance().getThisInstance());
+                    statement.setString(3, CoreSettings.getInstance().getSeason());
+                    ResultSet set = statement.executeQuery();
+                    while (set.next()) {
+                        String missionHandle = set.getString("mission");
+                        long timestamp = set.getLong("timestamp");
 
-                    completed.put(missionHandle, timestamp);
+                        completed.put(missionHandle, timestamp);
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            });
+
+            TypesListener.onPlayerLogin(player);
         });
     }
 
@@ -335,14 +338,17 @@ public class MissionsUser {
             this.counted = counted;
             this.timestamp = DailyMissionManager.getInstance().getLastGenerated() + 86400000;
             this.count = count;
+            this.longCount = (long) count*3600000;
         }
 
         Count(String counted, long longCount) {
             this.counted = counted;
+            this.timestamp = DailyMissionManager.getInstance().getLastGenerated() + 86400000;
             this.longCount = longCount;
+            this.count = (int) (longCount/3600000);
         }
 
-        String getCounted() {
+        public String getCounted() {
             return counted;
         }
 
