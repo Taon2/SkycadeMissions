@@ -249,7 +249,7 @@ public class TypesListener implements Listener {
 
                         short durability = 0;
                         obj = s.getOrDefault("durability", null);
-                        if (obj != null && ((Integer) obj).shortValue() != -1) durability = ((Integer) obj).shortValue();
+                        if (obj != null && (short) obj != -1) durability = (short) obj;
 
                         if (e.getPlayer() != null && e.getCaught() != null && e.getCaught() instanceof Item && ((Item) e.getCaught()).getItemStack().getType() == materialType && ((Item) e.getCaught()).getItemStack().getDurability() == durability) {
                             Player p = e.getPlayer();
