@@ -130,7 +130,6 @@ public class MissionManager implements Listener {
         new SnowballGunType();
         new FishingType();
         new LevelType();
-        new PlaytimeType();
     }
 
     private static void loadRewards() {

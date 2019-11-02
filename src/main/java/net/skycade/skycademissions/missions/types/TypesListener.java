@@ -24,7 +24,6 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerFishEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.*;
 
@@ -249,7 +248,7 @@ public class TypesListener implements Listener {
 
                         short durability = 0;
                         obj = s.getOrDefault("durability", null);
-                        if (obj != null && ((Integer) obj).shortValue() != -1) durability = ((Integer) obj).shortValue();
+                        if (obj != null && (short) obj != -1) durability = (short) obj;
 
                         if (e.getPlayer() != null && e.getCaught() != null && e.getCaught() instanceof Item && ((Item) e.getCaught()).getItemStack().getType() == materialType && ((Item) e.getCaught()).getItemStack().getDurability() == durability) {
                             Player p = e.getPlayer();
@@ -264,88 +263,6 @@ public class TypesListener implements Listener {
                             }
 
                             user.addCounter(mission, materialType.toString() + ":" + durability, count);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private static Map<UUID, Long> onlineMap = new HashMap<>();
-
-    //Listener for the PlaytimeType
-    public static void onPlayerLogin(Player p) {
-        for (Mission mission : currentCountableMissions) {
-            if (mission.getType() == Type.PLAYTIME) {
-                MissionsUser user = MissionsUser.get(p.getUniqueId());
-
-                List<Map<?, ?>> section = mission.getParams();
-
-                for (Map<?, ?> s : section) {
-                    Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
-                    calendar.set(Calendar.HOUR, 0);
-                    calendar.set(Calendar.MINUTE, 0);
-                    calendar.set(Calendar.SECOND, 0);
-
-                    Object type = s.getOrDefault("type", null);
-                    if (type == null) continue;
-
-                    if (type.toString().equals("HOURS")) {
-                        boolean doesCountExist = false;
-                        for (MissionsUser.Count missionCount : user.getCounts().get(mission.getHandle())) {
-                            if (!missionCount.getCounted().equals(type.toString())) continue;
-                            doesCountExist = true;
-                        }
-
-                        if (!doesCountExist && !user.hasPlayerCompleted(mission))
-                            user.addLongCounter(mission, type.toString(), 0);
-
-                        onlineMap.put(p.getUniqueId(), System.currentTimeMillis());
-                    }
-                }
-            }
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
-    public void onPlayerLogout(PlayerQuitEvent event) {
-        for (Mission mission : currentCountableMissions) {
-            if (mission.getType() == Type.PLAYTIME) {
-
-                List<Map<?, ?>> section = mission.getParams();
-
-                for (Map<?, ?> s : section) {
-                    Object type = s.getOrDefault("type", null);
-                    if (type == null) continue;
-
-                    if (type.toString().equals("HOURS")) {
-                        int amount = 1;
-                        Object obj = s.getOrDefault("amount", null);
-                        if (obj != null) amount = (Integer) obj;
-
-                        if (event.getPlayer() != null) {
-                            Player p = event.getPlayer();
-                            MissionsUser user = MissionsUser.get(p.getUniqueId());
-
-                            long count = amount*3600000;
-
-                            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
-                            calendar.set(Calendar.HOUR, 0);
-                            calendar.set(Calendar.MINUTE, 0);
-                            calendar.set(Calendar.SECOND, 0);
-
-                            //Return if the timer hasn't started counting
-                            if (!onlineMap.containsKey(p.getUniqueId())) return;
-
-                            long startTime = onlineMap.get(p.getUniqueId());
-                            long addedOnlineTime = System.currentTimeMillis() - startTime;
-
-                            if ((MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString())*3600000) < amount) {
-                                count = (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString())*3600000) + addedOnlineTime;
-                            }
-
-                            user.addLongCounter(mission, type.toString(), count);
-                            onlineMap.remove(p.getUniqueId());
                         }
                     }
                 }
