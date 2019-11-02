@@ -6,7 +6,6 @@ import net.skycade.SkycadeCore.utility.AsyncScheduler;
 import net.skycade.skycademissions.missions.DailyMissionManager;
 import net.skycade.skycademissions.missions.Mission;
 import net.skycade.skycademissions.missions.MissionManager;
-import net.skycade.skycademissions.missions.types.TypesListener;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -124,8 +123,6 @@ public class MissionsUser {
                     e.printStackTrace();
                 }
             });
-
-            TypesListener.onPlayerLogin(player);
         });
     }
 
