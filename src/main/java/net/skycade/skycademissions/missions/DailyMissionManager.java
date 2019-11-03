@@ -8,7 +8,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static net.skycade.skycademissions.util.Messages.NEWDAILYMISSIONS;
@@ -61,15 +60,23 @@ public class DailyMissionManager extends BukkitRunnable {
                 current.add(mission.getHandle());
             }
 
-            current.stream().map(MissionManager::getMissionFromName).filter(Objects::nonNull).forEach(mission -> {
-                mission.setGeneratedOn(System.currentTimeMillis());
-                mission.setCurrent(true);
-            });
+            for (String s : current) {
+                Mission mission = MissionManager.getMissionFromName(s);
 
-            oldMissions.stream().map(MissionManager::getMissionFromName).filter(Objects::nonNull).forEach(mission -> {
-                mission.setGeneratedOn(0);
-                mission.setCurrent(false);
-            });
+                if (mission != null) {
+                    mission.setGeneratedOn(System.currentTimeMillis());
+                    mission.setCurrent(true);
+                }
+            }
+
+            for (String s : oldMissions) {
+                Mission mission = MissionManager.getMissionFromName(s);
+
+                if (mission != null) {
+                    mission.setGeneratedOn(0);
+                    mission.setCurrent(false);
+                }
+            }
 
             lastGenerated = System.currentTimeMillis();
             MissionManager.updateMissionsDatabase();

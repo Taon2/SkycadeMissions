@@ -151,7 +151,7 @@ public class TypesListener implements Listener {
     }
 
     //Listener for the MiningType
-    @EventHandler(/*ignoreCancelled = true, */priority = EventPriority.NORMAL)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
     public void onBlockBreak(BlockBreakEvent e) {
         for (Mission mission : currentCountableMissions) {
             if (mission.getType() == Type.MINING) {

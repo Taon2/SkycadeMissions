@@ -128,6 +128,9 @@ public class MissionsUser {
 
     public void addCounter(Mission mission, String counted, int count) {
         boolean doesCountExist = false;
+
+        if (mission.getHandle() == null || counts.get(mission.getHandle()) == null) return;
+
         for (Count missionCount : counts.get(mission.getHandle())) {
             if (!missionCount.getCounted().equals(counted)) continue;
             doesCountExist = true;
