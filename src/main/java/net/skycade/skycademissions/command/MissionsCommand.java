@@ -2,7 +2,7 @@ package net.skycade.skycademissions.command;
 
 import net.skycade.SkycadeCore.utility.command.SkycadeCommand;
 import net.skycade.SkycadeCore.utility.command.addons.NoConsole;
-import net.skycade.skycademissions.missions.MissionManager;
+import net.skycade.skycademissions.gui.MissionGui;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -15,11 +15,8 @@ public class MissionsCommand extends SkycadeCommand {
 
     @Override
     public void onCommand(CommandSender sender, String[] args) {
-        final Player player = (Player) sender;
-        if (player.getUniqueId() == null) {
-            return;
-        }
+        if (!(sender instanceof Player)) return;
 
-        MissionManager.openMissionGui(player);
+        new MissionGui().open((Player) sender);
     }
 }

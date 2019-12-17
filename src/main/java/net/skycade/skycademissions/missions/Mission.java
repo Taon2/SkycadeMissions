@@ -21,7 +21,7 @@ public class Mission {
     private final MissionLevel level;
 
     private final Material icon;
-    private final short durability;
+    private final byte durability;
     private final List<String> lore;
 
     private final int position;
@@ -30,7 +30,7 @@ public class Mission {
         return isDaily;
     }
 
-    Mission(Boolean isDaily, Boolean isCurrent, long generatedOn, Type type, String handle, String displayName, List<Map<?, ?>> params,
+    public Mission(Boolean isDaily, Boolean isCurrent, long generatedOn, Type type, String handle, String displayName, List<Map<?, ?>> params,
             MissionLevel level, String icon, List<String> lore, int position) {
         this.isDaily = isDaily;
         this.isCurrent = isCurrent;
@@ -44,7 +44,7 @@ public class Mission {
             this.icon = Material.valueOf(icon.substring(0, icon.indexOf(":")));
             int colonLocation = icon.indexOf(":");
 
-            this.durability = Short.parseShort(icon.substring((colonLocation+1)));
+            this.durability = Byte.parseByte(icon.substring((colonLocation+1)));
         }
         else{
             this.icon = Material.valueOf(icon.toUpperCase());
@@ -55,7 +55,7 @@ public class Mission {
         this.position = position;
     }
 
-    short getDurability() {
+    public byte getDurability() {
         return durability;
     }
 
@@ -67,7 +67,7 @@ public class Mission {
         return handle;
     }
 
-    String getDisplayName() {
+    public String getDisplayName() {
         return displayName;
     }
 
@@ -79,16 +79,15 @@ public class Mission {
         return level;
     }
 
-    Material getIcon() {
-
+    public Material getIcon() {
         return icon;
     }
 
-    List<String> getLore() {
+    public List<String> getLore() {
         return lore;
     }
 
-    Integer getPosition() {
+    public Integer getPosition() {
         return position;
     }
 

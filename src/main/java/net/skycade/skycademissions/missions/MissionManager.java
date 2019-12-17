@@ -5,25 +5,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.skycade.SkycadeCore.CoreSettings;
-import net.skycade.SkycadeCore.guis.dynamicnew.DynamicGui;
 import net.skycade.SkycadeCore.utility.AsyncScheduler;
-import net.skycade.SkycadeCore.utility.ItemBuilder;
-import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.types.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.ItemFlag;
-import org.bukkit.inventory.ItemStack;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,13 +21,16 @@ import java.util.stream.Collectors;
 
 public class MissionManager implements Listener {
 
-    private static SkycadeMissionsPlugin plugin = SkycadeMissionsPlugin.getInstance();
-
     private static Map<Type, MissionType> types = new HashMap<>();
 
     private static TreeSet<Mission> missions = new TreeSet<>(Comparator.comparingInt(Mission::getPosition));
 
-    private static Map<MissionLevel, List<Reward>> rewards = new HashMap<>();
+    private static TreeMap<MissionLevel, List<Reward>> rewards = new TreeMap<>();
+
+    public MissionManager() {
+        loadMissions();
+        loadRewards();
+    }
 
     public static void addMissions(MissionType... types) {
         for (MissionType type : types) {
@@ -48,7 +38,28 @@ public class MissionManager implements Listener {
         }
     }
 
-    public static void loadMissions() {
+    public static MissionType getType(Type type) {
+        return types.getOrDefault(type, null);
+    }
+
+    public static Map<MissionLevel, List<Reward>> getRewards() {
+        return rewards;
+    }
+
+    static List<Mission> getAllDaily() {
+        return missions.stream().filter(Mission::isDaily).collect(Collectors.toList());
+    }
+
+    public static Mission getMissionFromName(String handle) {
+        for (Mission mission : missions) {
+            if (mission.getHandle().equals(handle)) {
+                return mission;
+            }
+        }
+        return null;
+    }
+
+    private static void loadMissions() {
         JsonParser jsonParser = new JsonParser();
 
         Bukkit.getScheduler().runTaskAsynchronously(SkycadeMissionsPlugin.getInstance(), () -> {
@@ -65,7 +76,7 @@ public class MissionManager implements Listener {
                     String icon = set.getString("icon");
                     String displayName = set.getString("displayname");
                     String lore = set.getString("description");
-                    if (lore != null) lore = ChatColor.translateAlternateColorCodes('&', lore);
+                    if (lore != null) lore = ChatColor.GRAY + lore;
 
                     List<String> missionLore;
 
@@ -112,24 +123,11 @@ public class MissionManager implements Listener {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+
             new DailyMissionManager();
-            Bukkit.getPluginManager().registerEvents(new TypesListener(), plugin);
+
+            TypesManager.getInstance().loadCurrentCountableMissions();
         });
-
-        loadRewards();
-
-        new LandType();
-        new InventoryType();
-        new DamageType();
-        new KillType();
-        new MiningType();
-        new ShopType();
-        new EnchantType();
-        new GenerateType();
-        new SwindleType();
-        new SnowballGunType();
-        new FishingType();
-        new LevelType();
     }
 
     private static void loadRewards() {
@@ -143,7 +141,7 @@ public class MissionManager implements Listener {
                     MissionLevel level = MissionLevel.valueOf(set.getString("level"));
                     String name = set.getString("name");
                     String commands = set.getString("commands");
-                    if (name != null) name = ChatColor.translateAlternateColorCodes('&', name);
+                    if (name != null) name = ChatColor.GRAY + name;
 
                     List<String> rewardDisplayName;
 
@@ -161,7 +159,7 @@ public class MissionManager implements Listener {
                         rewardCommands = new ArrayList<>();
                     }
 
-                    Reward rewardData = new Reward(level, rewardDisplayName, rewardCommands);
+                    Reward rewardData = new Reward(rewardDisplayName, rewardCommands);
 
                     if (rewards.containsKey(level)) {
                         rewards.get(level).add(rewardData);
@@ -175,181 +173,7 @@ public class MissionManager implements Listener {
         });
     }
 
-    public static void openMissionGui(Player player) {
-        openMissionGui(player, 1);
-    }
-
-    private static void openMissionGui(Player player, int page) {
-        DynamicGui missionsGui = new DynamicGui(ChatColor.translateAlternateColorCodes('&', "&c&lMissions"), 3);
-        MissionsUser user = MissionsUser.get(player.getUniqueId());
-
-        int x = 0;
-
-        if (DailyMissionManager.getInstance().getCurrent().size() <= 0) return;
-
-        List<String> daily = DailyMissionManager.getInstance().getCurrent();
-
-        int guiSlot = 11;
-        for (Mission mission : missions) {
-
-            if (mission.isDaily() && !daily.contains(mission.getHandle())) continue;
-
-            ++x;
-            if (x <= 18 * (page - 1)) continue;
-            if (x > 18 * page) break;
-            ItemStack item;
-
-            List<Map<?, ?>> params = mission.getParams();
-            String currentCount;
-            ArrayList<String> countingLore = new ArrayList<>();
-
-            for (Map<?, ?> s : params) {
-                Object type = s.getOrDefault("type", null);
-                if (type == null) continue;
-                String countedThing = type.toString();
-
-                int amount = 1;
-                Object obj = s.getOrDefault("amount", null);
-                if (obj != null) amount = (Integer) obj;
-
-                short durability = -1;
-                obj = s.getOrDefault("durability", null);
-                if (obj != null) durability = ((Short) obj);
-
-                if (durability != -1) {
-                    countedThing = countedThing + ":" + durability;
-                }
-
-                currentCount = ChatColor.GREEN + countedThing + ": " + ChatColor.AQUA + MissionManager.getType(mission.getType()).getCurrentCount(player.getUniqueId(), mission, countedThing) + (ChatColor.RED + "/") + ChatColor.AQUA + amount;
-                countingLore.add(currentCount);
-            }
-
-            List <String> lore = new ArrayList<>();
-
-            lore.add(ChatColor.RED + "" + ChatColor.BOLD + mission.getLevel().toString());
-            lore.addAll(mission.getLore());
-            lore.addAll(countingLore);
-
-            if (mission.getIcon() == Material.INK_SACK || mission.getIcon() == Material.WOOL || mission.getIcon() == Material.LOG || mission.getIcon() == Material.RAW_FISH) {
-                ItemBuilder b = new ItemBuilder(new ItemStack(mission.getIcon(), 1, mission.getDurability()))
-                        .setDisplayName(ChatColor.AQUA + "" + ChatColor.BOLD + mission.getDisplayName())
-                        .setLore(lore);
-
-                if (user.hasPlayerCompleted(mission))
-                    b = b.addEnchantment(Enchantment.DURABILITY, 10)
-                            .setItemFlags(ItemFlag.values());
-
-                item = b.build();
-            } else {
-                ItemBuilder b = new ItemBuilder(new ItemStack(mission.getIcon(), 1))
-                        .setDisplayName(ChatColor.AQUA + "" + ChatColor.BOLD + mission.getDisplayName())
-                        .setLore(lore);
-
-                if (user.hasPlayerCompleted(mission))
-                    b = b.addEnchantment(Enchantment.DURABILITY, 10)
-                            .setItemFlags(ItemFlag.values());
-
-                item = b.build();
-            }
-
-            missionsGui.setItemInteraction(guiSlot, item, new MissionVerifyAction(mission));
-            guiSlot += 2;
-        }
-
-        ItemBuilder rewardsItem = new ItemBuilder(new ItemStack(Material.NETHER_STAR, 1))
-                .setDisplayName(ChatColor.GOLD + "" + ChatColor.BOLD + "Rewards")
-                .setLore("Displays the rewards you can win.");
-        missionsGui.setItem(26, rewardsItem.build());
-
-        missionsGui.open(player);
-    }
-
-    private static void openRewardsGUI(Player player) {
-        DynamicGui rewardsGui = new DynamicGui(ChatColor.translateAlternateColorCodes('&', "&c&lRewards"), 3);
-
-        Map<MissionLevel, List<Reward>> rewards = MissionManager.getRewards();
-
-        if (rewards.size() <= 0) return;
-
-        int guiSlot = 10;
-        for (MissionLevel levelKey : rewards.keySet()) {
-            ItemStack item;
-            ArrayList <String> lore = new ArrayList<>();
-
-            for (Reward reward : rewards.get(levelKey)) {
-                List<String> rewardNames = reward.getNames();
-                lore.addAll(rewardNames);
-                lore.add(ChatColor.GOLD + "-");
-            }
-
-            ItemBuilder b = new ItemBuilder(new ItemStack(Material.NETHER_STAR, 1))
-                    .setDisplayName(ChatColor.RED + "" + ChatColor.BOLD + levelKey.name().toUpperCase() + " Rewards")
-                    .setLore(lore);
-
-            item = b.build();
-
-            rewardsGui.setItem(guiSlot, item);
-            guiSlot += 2;
-        }
-
-        ItemBuilder backItem = new ItemBuilder(new ItemStack(Material.ARROW, 1))
-                .setDisplayName(ChatColor.GOLD + "" + ChatColor.BOLD + "Go Back")
-                .setLore("Return to the Missions GUI.");
-        rewardsGui.setItem(26, backItem.build());
-
-        rewardsGui.open(player);
-    }
-
-    @EventHandler(priority = EventPriority.NORMAL)
-    public void onInventoryClick(InventoryClickEvent e) {
-        if (e.getClickedInventory() == null) return;
-
-        if (e.getClickedInventory().getName().equals("§c§lMissions") && e.getSlot() == 26) {
-            openRewardsGUI((Player) e.getWhoClicked());
-        } else if (e.getClickedInventory().getName().equals("§c§lRewards") && e.getSlot() == 26) {
-            openMissionGui((Player) e.getWhoClicked());
-        } else if (e.getClickedInventory().getName().equals("§c§lRewards")){
-            e.setCancelled(true);
-        }
-    }
-
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onPlayerLogin(PlayerJoinEvent e) {
-        MissionsUser.add(e.getPlayer().getUniqueId(), new MissionsUser(e.getPlayer()));
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPlayerLogout(PlayerQuitEvent e) {
-        Player p = e.getPlayer();
-        MissionsUser user = MissionsUser.get(p.getUniqueId());
-
-        user.updateCountsDatabase();
-        user.updateCompletedDatabase();
-        MissionsUser.remove(e.getPlayer().getUniqueId());
-    }
-
-    public static MissionType getType(Type type) {
-        return types.getOrDefault(type, null);
-    }
-
-    static Map<MissionLevel, List<Reward>> getRewards() {
-        return rewards;
-    }
-
-    static List<Mission> getAllDaily() {
-        return missions.stream().filter(Mission::isDaily).collect(Collectors.toList());
-    }
-
-    public static Mission getMissionFromName(String handle) {
-        for (Mission mission : missions) {
-            if (mission.getHandle().equals(handle)) {
-                return mission;
-            }
-        }
-        return null;
-    }
-
-    static void updateMissionsDatabase() {
+    public static void updateMissionsDatabase() {
         AsyncScheduler.runTask(SkycadeMissionsPlugin.getInstance(), () -> {
 
             try (Connection connection = CoreSettings.getInstance().getConnection()) {

@@ -12,6 +12,5 @@ public enum Type {
     SWINDLE,
     SNOWBALLGUN,
     FISHING,
-    LEVEL,
-    PLAYTIME
+    LEVEL
 }
