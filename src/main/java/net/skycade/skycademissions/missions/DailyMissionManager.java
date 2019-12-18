@@ -32,7 +32,7 @@ public class DailyMissionManager extends BukkitRunnable {
     @Override
     public void run() {
         if (lastGenerated == 0L) {
-            MissionManager.getAllDaily().forEach(mission -> {
+            SkycadeMissionsPlugin.getInstance().getMissionManager().getAllDaily().forEach(mission -> {
                 if (mission.getGeneratedOn() != 0 && mission.isCurrent()) {
                     lastGenerated = mission.getGeneratedOn();
                     current.add(mission);
@@ -45,7 +45,7 @@ public class DailyMissionManager extends BukkitRunnable {
 
         if (lastGenerated + 86400000 < today) {
             // generate, persist
-            List<Mission> daily = MissionManager.getAllDaily();
+            List<Mission> daily = SkycadeMissionsPlugin.getInstance().getMissionManager().getAllDaily();
             List<Mission> oldMissions = new ArrayList<>(current);
 
             current.clear();
@@ -75,7 +75,7 @@ public class DailyMissionManager extends BukkitRunnable {
             }
 
             lastGenerated = System.currentTimeMillis();
-            MissionManager.updateMissionsDatabase();
+            SkycadeMissionsPlugin.getInstance().getMissionManager().updateMissionsDatabase();
 
             NEWDAILYMISSIONS.broadcast();
         }

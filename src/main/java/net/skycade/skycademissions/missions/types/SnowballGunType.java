@@ -4,8 +4,8 @@ import net.skycade.SkycadeCore.Localization;
 import net.skycade.SkycadeEnchants.events.SkycadeSnowballGunEvent;
 import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.MissionsUserManager;
+import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.Mission;
-import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.missions.Result;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,7 +24,7 @@ public class SnowballGunType extends MissionType {
     public SnowballGunType(TypesManager typesManager) {
         super();
         this.typesManager = typesManager;
-        Localization.getInstance().registerMessages("skycade.prisons.missions.hit",
+        Localization.getInstance().registerMessages("skycade.missions.hit",
                 NOT_ENOUGH_HIT
         );
     }
@@ -41,7 +41,7 @@ public class SnowballGunType extends MissionType {
                     Object type = s.getOrDefault("type", null);
                     if (type == null) continue;
 
-                    //Handles missions that count any enchantments
+                    //Handles missions that count the target type
                     if (type.toString().equalsIgnoreCase(event.getTarget().getType().toString())) {
                         int amount = 1;
                         Object obj = s.getOrDefault("amount", null);
@@ -54,12 +54,12 @@ public class SnowballGunType extends MissionType {
 
                             int count = amount;
 
-                            if (MissionManager.getType(mission.getType()).getCurrentCount(shooter.getUniqueId(), mission, type.toString()) < amount) {
+                            if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(shooter.getUniqueId(), mission, type.toString()) < amount) {
                                 //If the player has already been hit, return
                                 if (user.getHitWithSnowball().contains(target.getUniqueId())) return;
                                 user.addHitWithSnowball(target.getUniqueId());
 
-                                count = MissionManager.getType(mission.getType()).getCurrentCount(shooter.getUniqueId(), mission, type.toString()) + 1;
+                                count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(shooter.getUniqueId(), mission, type.toString()) + 1;
                             }
 
                             user.addCounter(mission, type.toString(), count);

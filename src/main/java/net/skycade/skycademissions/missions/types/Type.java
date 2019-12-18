@@ -12,5 +12,9 @@ public enum Type {
     SWINDLE,
     SNOWBALLGUN,
     FISHING,
-    LEVEL
+    LEVEL,
+    SPECIALABILITY,
+    KITKILL,
+    KILLSTREAK,
+    COINREWARD
 }

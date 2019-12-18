@@ -5,8 +5,8 @@ import net.skycade.SkycadeCore.guis.dynamicnew.DynamicGui;
 import net.skycade.SkycadeCore.utility.ItemBuilder;
 import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.MissionsUserManager;
+import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.DailyMissionManager;
-import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.missions.MissionVerifyAction;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -28,9 +28,6 @@ public class MissionGui extends DynamicGui {
 
     public MissionGui() {
         super(ChatColor.AQUA + "" + ChatColor.BOLD + "Missions", 3);
-
-        //todo ./missions and the rewards gui not right
-        //todo clicking a mission does nothing it seems
 
         DailyMissionManager.getInstance().getCurrent()
                 .forEach(mission ->  {
@@ -69,7 +66,7 @@ public class MissionGui extends DynamicGui {
 
                                     String currentCount =
                                             org.bukkit.ChatColor.GREEN + countedThing + ": "
-                                                    + org.bukkit.ChatColor.AQUA + MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, countedThing)
+                                                    + org.bukkit.ChatColor.AQUA + SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, countedThing)
                                                     + org.bukkit.ChatColor.RED + "/"
                                                     + org.bukkit.ChatColor.AQUA + amount;
 

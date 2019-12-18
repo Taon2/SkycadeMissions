@@ -26,8 +26,6 @@ public class SkycadeMissionsPlugin extends SkycadePlugin {
         return instance;
     }
 
-    //TODO change the skyblock packet listener
-
     private void defaults() {
         Map<String, Object> defaults = new TreeMap<>();
         defaults.put("refresh-missions", true);
@@ -41,7 +39,7 @@ public class SkycadeMissionsPlugin extends SkycadePlugin {
         super.onEnable();
         defaults();
 
-        new MissionManager();
+        missionManager = new MissionManager();
         missionsUserManager = new MissionsUserManager();
         new TypesManager(this);
 
@@ -55,5 +53,9 @@ public class SkycadeMissionsPlugin extends SkycadePlugin {
     @Override
     public void onDisable() {
         super.onDisable();
+    }
+
+    public MissionManager getMissionManager() {
+        return missionManager;
     }
 }

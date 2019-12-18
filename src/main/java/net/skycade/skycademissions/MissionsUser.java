@@ -12,6 +12,8 @@ public class MissionsUser {
     private Map<String, Long> completed;
 
     private List<UUID> hitWithSnowball = new ArrayList<>();
+    private List<String> specialAbilityKitsUsed = new ArrayList<>();
+    private List<String> kitKillKitsUsed = new ArrayList<>();
 
     public MissionsUser(Player player, Map<String, List<Count>> counts) {
         this.player = player;
@@ -34,8 +36,24 @@ public class MissionsUser {
         return hitWithSnowball;
     }
 
+    public List<String> getSpecialAbilityKitsUsed() {
+        return specialAbilityKitsUsed;
+    }
+
+    public List<String> getKitKillKitsUsed() {
+        return kitKillKitsUsed;
+    }
+
     public void addHitWithSnowball(UUID uuid) {
         hitWithSnowball.add(uuid);
+    }
+
+    public void addSpecialAbilityKitUsed(String kitType) {
+        specialAbilityKitsUsed.add(kitType);
+    }
+
+    public void addKitKillKitUsed(String kitType) {
+        kitKillKitsUsed.add(kitType);
     }
 
     public void addCounter(Mission mission, String counted, int count) {

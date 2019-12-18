@@ -1,7 +1,7 @@
 package net.skycade.skycademissions.missions.types;
 
 import net.skycade.SkycadeCore.Localization;
-import net.skycade.SkycadeEnchants.events.SkycadeSwindlerEvent;
+import net.skycade.kitpvp.bukkitevents.KitPvPCoinsRewardEvent;
 import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.MissionsUserManager;
 import net.skycade.skycademissions.SkycadeMissionsPlugin;
@@ -15,50 +15,48 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class SwindleType extends MissionType {
+public class CoinRewardType extends MissionType {
 
-    private static final Localization.Message NOT_ENOUGH_SWINDLED = new Localization.Message("not-enough-swindled", "&cYou need to swindle $%val% more!");
+    private static final Localization.Message NOT_ENOUGH_COINS_GATHERED = new Localization.Message("not-enough-coins-gathered", "&cYou need to gather $%val% more coins!");
 
     private TypesManager typesManager;
 
-    public SwindleType(TypesManager typesManager) {
+    public CoinRewardType(TypesManager typesManager) {
         super();
         this.typesManager = typesManager;
-        Localization.getInstance().registerMessages("skycade.missions.swindled",
-                NOT_ENOUGH_SWINDLED
+        Localization.getInstance().registerMessages("skycade.missions.coin-reward",
+                NOT_ENOUGH_COINS_GATHERED
         );
     }
 
-    //Listener for the SwindleType
+    //Listener for ShopType
     @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onSkycadeSwindle(SkycadeSwindlerEvent event) {
+    public void onKitPvPCoinReward(KitPvPCoinsRewardEvent event) {
         //Loops through all missions for this type
         for (Mission mission : typesManager.getCurrentCountableMissions()) {
-            if (mission.getType() == Type.SWINDLE) {
+            if (mission.getType() == Type.COINREWARD) {
                 List<Map<?, ?>> section = mission.getParams();
 
                 for (Map<?, ?> s : section) {
                     Object type = s.getOrDefault("type", null);
                     if (type == null) continue;
 
-                    //Handles missions that counts money swindled
-                    if (type.toString().equals("$")) {
-                        int amount = 1;
-                        Object obj = s.getOrDefault("amount", null);
-                        if (obj != null) amount = (Integer) obj;
+                    //Handles missions that count coins
+                    int amount = 1;
+                    Object obj = s.getOrDefault("amount", null);
+                    if (obj != null) amount = (Integer) obj;
 
-                        if (event.getPlayer() != null) {
-                            Player p = event.getPlayer();
-                            MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
+                    if (event.getPlayer() != null) {
+                        Player p = event.getPlayer();
+                        MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
 
-                            int count = amount;
+                        int count = amount;
 
-                            if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
-                                count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) event.getAmount();
-                            }
-
-                            user.addCounter(mission, type.toString(), count);
+                        if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
+                            count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + event.getNewCoins();
                         }
+
+                        user.addCounter(mission, type.toString(), count);
                     }
                 }
             }
@@ -87,7 +85,7 @@ public class SwindleType extends MissionType {
             int current  = getCurrentCount(player.getUniqueId(), miss, type.toString());
             if (current < amount) {
                 hasFailed = true;
-                player.sendMessage(NOT_ENOUGH_SWINDLED.getMessage(player)
+                player.sendMessage(NOT_ENOUGH_COINS_GATHERED.getMessage(player)
                         .replaceAll("%val%", (amount - current) + "")
                 );
             }
@@ -101,7 +99,7 @@ public class SwindleType extends MissionType {
 
     @Override
     public Type getType() {
-        return Type.SWINDLE;
+        return Type.COINREWARD;
     }
 
     @Override

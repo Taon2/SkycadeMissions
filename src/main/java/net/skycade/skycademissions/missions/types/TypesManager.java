@@ -29,7 +29,11 @@ public class TypesManager {
                 Type.GENERATE,
                 Type.SWINDLE,
                 Type.SNOWBALLGUN,
-                Type.FISHING
+                Type.FISHING,
+                Type.SPECIALABILITY,
+                Type.KITKILL,
+                Type.KILLSTREAK,
+                Type.COINREWARD
         );
     }
 
@@ -62,6 +66,13 @@ public class TypesManager {
             Bukkit.getPluginManager().registerEvents(new SnowballGunType(this), plugin);
         }
 
+        //Don't suicide if kitpvp plugin isn't loaded
+        if (Bukkit.getPluginManager().getPlugin("KitPvP") != null) {
+            Bukkit.getPluginManager().registerEvents(new SpecialAbilityType(this), plugin);
+            Bukkit.getPluginManager().registerEvents(new KitKillType(this), plugin);
+            Bukkit.getPluginManager().registerEvents(new KillstreakType(this), plugin);
+            Bukkit.getPluginManager().registerEvents(new CoinRewardType(this), plugin);
+        }
     }
 
     public void loadCurrentCountableMissions() {

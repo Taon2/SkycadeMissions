@@ -1,7 +1,7 @@
 package net.skycade.skycademissions.missions.types;
 
 import net.skycade.SkycadeCore.Localization;
-import net.skycade.SkycadeEnchants.events.SkycadeSwindlerEvent;
+import net.skycade.kitpvp.bukkitevents.KitPvPSpecialAbilityEvent;
 import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.MissionsUserManager;
 import net.skycade.skycademissions.SkycadeMissionsPlugin;
@@ -15,51 +15,50 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class SwindleType extends MissionType {
+public class SpecialAbilityType extends MissionType {
 
-    private static final Localization.Message NOT_ENOUGH_SWINDLED = new Localization.Message("not-enough-swindled", "&cYou need to swindle $%val% more!");
+    private static final Localization.Message NOT_ENOUGH_SPECIAL_ABILITY = new Localization.Message("not-enough-special-ability", "&cYou need to use your special ability %val% more times!");
 
     private TypesManager typesManager;
 
-    public SwindleType(TypesManager typesManager) {
+    public SpecialAbilityType(TypesManager typesManager) {
         super();
         this.typesManager = typesManager;
-        Localization.getInstance().registerMessages("skycade.missions.swindled",
-                NOT_ENOUGH_SWINDLED
+        Localization.getInstance().registerMessages("skycade.missions.special-ability",
+                NOT_ENOUGH_SPECIAL_ABILITY
         );
     }
 
-    //Listener for the SwindleType
+    //Listener for the SpecialAbilityType
     @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onSkycadeSwindle(SkycadeSwindlerEvent event) {
+    public void onKitPvPSpecialAbility(KitPvPSpecialAbilityEvent event) {
         //Loops through all missions for this type
         for (Mission mission : typesManager.getCurrentCountableMissions()) {
-            if (mission.getType() == Type.SWINDLE) {
+            if (mission.getType() == Type.SPECIALABILITY) {
                 List<Map<?, ?>> section = mission.getParams();
 
                 for (Map<?, ?> s : section) {
                     Object type = s.getOrDefault("type", null);
                     if (type == null) continue;
 
-                    //Handles missions that counts money swindled
-                    if (type.toString().equals("$")) {
-                        int amount = 1;
-                        Object obj = s.getOrDefault("amount", null);
-                        if (obj != null) amount = (Integer) obj;
+                    //Handles missions that count all special abilities used
+                    int amount = 1;
+                    Object obj = s.getOrDefault("amount", null);
+                    if (obj != null) amount = (Integer) obj;
 
-                        if (event.getPlayer() != null) {
-                            Player p = event.getPlayer();
-                            MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
+                    MissionsUser user = MissionsUserManager.getInstance().get(event.getPlayer().getUniqueId());
 
-                            int count = amount;
+                    int count = amount;
 
-                            if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
-                                count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) event.getAmount();
-                            }
+                    if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(event.getPlayer().getUniqueId(), mission, type.toString()) < amount) {
+                        //If the player has already used this special ability, return
+                        if (user.getSpecialAbilityKitsUsed().contains(event.getKitType().getKit().getName())) return;
+                        user.addSpecialAbilityKitUsed(event.getKitType().getKit().getName());
 
-                            user.addCounter(mission, type.toString(), count);
-                        }
+                        count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(event.getPlayer().getUniqueId(), mission, type.toString()) + 1;
                     }
+
+                    user.addCounter(mission, type.toString(), count);
                 }
             }
         }
@@ -87,7 +86,7 @@ public class SwindleType extends MissionType {
             int current  = getCurrentCount(player.getUniqueId(), miss, type.toString());
             if (current < amount) {
                 hasFailed = true;
-                player.sendMessage(NOT_ENOUGH_SWINDLED.getMessage(player)
+                player.sendMessage(NOT_ENOUGH_SPECIAL_ABILITY.getMessage(player)
                         .replaceAll("%val%", (amount - current) + "")
                 );
             }
@@ -101,7 +100,7 @@ public class SwindleType extends MissionType {
 
     @Override
     public Type getType() {
-        return Type.SWINDLE;
+        return Type.SPECIALABILITY;
     }
 
     @Override

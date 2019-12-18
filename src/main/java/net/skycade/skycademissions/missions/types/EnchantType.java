@@ -6,8 +6,8 @@ import net.skycade.SkycadeEnchants.events.SkycadeCustomEnchantItemEvent;
 import net.skycade.prisons.util.EnchantmentTypes;
 import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.MissionsUserManager;
+import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.Mission;
-import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.missions.Result;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -27,7 +27,7 @@ public class EnchantType extends MissionType implements Listener {
     public EnchantType(TypesManager typesManager) {
         super();
         this.typesManager = typesManager;
-        Localization.getInstance().registerMessages("skycade.prisons.missions.enchanted",
+        Localization.getInstance().registerMessages("skycade.missions.enchanted",
                 NOT_ENOUGH_ENCHANTED
         );
     }
@@ -56,8 +56,8 @@ public class EnchantType extends MissionType implements Listener {
 
                             int count = amount;
 
-                            if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
-                                count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + 1;
+                            if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
+                                count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + 1;
                             }
 
                             user.addCounter(mission, type.toString(), count);
@@ -91,8 +91,8 @@ public class EnchantType extends MissionType implements Listener {
 
                             int count = amount;
 
-                            if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, handle) < amount) {
-                                count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, handle) + 1;
+                            if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, handle) < amount) {
+                                count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, handle) + 1;
                             }
 
                             user.addCounter(mission, handle, count);

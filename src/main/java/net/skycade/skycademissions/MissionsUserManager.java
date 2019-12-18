@@ -4,7 +4,6 @@ import com.google.common.collect.Maps;
 import net.skycade.SkycadeCore.CoreSettings;
 import net.skycade.SkycadeCore.utility.AsyncScheduler;
 import net.skycade.skycademissions.missions.DailyMissionManager;
-import net.skycade.skycademissions.missions.MissionManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -109,7 +108,8 @@ public class MissionsUserManager {
                     String missionHandle = set.getString("mission");
 
                     //checks if the mission exists, and if the mission is current
-                    if (missionHandle == null || MissionManager.getMissionFromName(missionHandle) == null || !DailyMissionManager.getInstance().getCurrent().contains(MissionManager.getMissionFromName(missionHandle))) continue;
+                    if (missionHandle == null || SkycadeMissionsPlugin.getInstance().getMissionManager().getMissionFromName(missionHandle) == null
+                            || !DailyMissionManager.getInstance().getCurrent().contains(SkycadeMissionsPlugin.getInstance().getMissionManager().getMissionFromName(missionHandle))) continue;
                     String counted = set.getString("counted");
                     long timestamp = set.getLong("timestamp");
                     int count = set.getInt("count");

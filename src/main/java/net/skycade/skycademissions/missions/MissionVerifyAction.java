@@ -2,6 +2,7 @@ package net.skycade.skycademissions.missions;
 
 import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.MissionsUserManager;
+import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.types.MissionType;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
@@ -23,7 +24,7 @@ public class MissionVerifyAction {
 
     //Checks if the player should get the rewards or not
     public void checkComplete(Player p) {
-        MissionType type = MissionManager.getType(mission.getType());
+        MissionType type = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType());
         MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
 
         if (type == null) return;
@@ -59,7 +60,7 @@ public class MissionVerifyAction {
     private void giveRewards(Player p) {
         COMPLETEMISSION.msg(p, "%mission%", mission.getDisplayName());
 
-        Map<MissionLevel, List<Reward>> rewards = MissionManager.getRewards();
+        Map<MissionLevel, List<Reward>> rewards = SkycadeMissionsPlugin.getInstance().getMissionManager().getRewards();
         List<Reward> missionRewards = rewards.get(mission.getLevel());
 
         int num = missionRewards.size();
@@ -85,7 +86,7 @@ public class MissionVerifyAction {
             }
         }
 
-        Map<MissionLevel, List<Reward>> rewards = MissionManager.getRewards();
+        Map<MissionLevel, List<Reward>> rewards = SkycadeMissionsPlugin.getInstance().getMissionManager().getRewards();
         List<Reward> missionRewards = rewards.get(MissionLevel.ALLTHREE);
 
         if (missionRewards == null) {

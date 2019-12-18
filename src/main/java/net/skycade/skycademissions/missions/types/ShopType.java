@@ -3,8 +3,8 @@ package net.skycade.skycademissions.missions.types;
 import net.skycade.SkycadeCore.Localization;
 import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.MissionsUserManager;
+import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.Mission;
-import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.missions.Result;
 import net.skycade.skycadeshop.impl.skycade.event.PostSellTransactionEvent;
 import org.bukkit.entity.Player;
@@ -24,7 +24,7 @@ public class ShopType extends MissionType {
     public ShopType(TypesManager typesManager) {
         super();
         this.typesManager = typesManager;
-        Localization.getInstance().registerMessages("skycade.prisons.missions.sold",
+        Localization.getInstance().registerMessages("skycade.missions.sold",
                 NOT_ENOUGH_SOLD
         );
     }
@@ -41,7 +41,7 @@ public class ShopType extends MissionType {
                     Object type = s.getOrDefault("type", null);
                     if (type == null) continue;
 
-                    //Handles missions that count any enchantments
+                    //Handles missions that count $
                     if (type.toString().equals("$")) {
                         int amount = 1;
                         Object obj = s.getOrDefault("amount", null);
@@ -53,8 +53,8 @@ public class ShopType extends MissionType {
 
                             int count = amount;
 
-                            if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
-                                count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) event.getMoneyGained();
+                            if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
+                                count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) event.getMoneyGained();
                             }
 
                             user.addCounter(mission, type.toString(), count);

@@ -3,7 +3,7 @@ package net.skycade.skycademissions.gui;
 import net.md_5.bungee.api.ChatColor;
 import net.skycade.SkycadeCore.guis.dynamicnew.DynamicGui;
 import net.skycade.SkycadeCore.utility.ItemBuilder;
-import net.skycade.skycademissions.missions.MissionManager;
+import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.Reward;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -22,7 +22,7 @@ public class MissionRewardsGui extends DynamicGui {
     public MissionRewardsGui() {
         super(ChatColor.AQUA + "" + ChatColor.BOLD + "Rewards", 3);
 
-        MissionManager.getRewards()
+        SkycadeMissionsPlugin.getInstance().getMissionManager().getRewards()
                 .forEach((missionLevel, rewardsList) -> {
                     setItem(slot, p -> {
                         ItemBuilder b = new ItemBuilder(new ItemStack(Material.NETHER_STAR, 1));

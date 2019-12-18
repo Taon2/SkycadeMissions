@@ -21,36 +21,36 @@ import java.util.stream.Collectors;
 
 public class MissionManager implements Listener {
 
-    private static Map<Type, MissionType> types = new HashMap<>();
+    private Map<Type, MissionType> types = new HashMap<>();
 
-    private static TreeSet<Mission> missions = new TreeSet<>(Comparator.comparingInt(Mission::getPosition));
+    private TreeSet<Mission> missions = new TreeSet<>(Comparator.comparingInt(Mission::getPosition));
 
-    private static TreeMap<MissionLevel, List<Reward>> rewards = new TreeMap<>();
+    private TreeMap<MissionLevel, List<Reward>> rewards = new TreeMap<>();
 
     public MissionManager() {
         loadMissions();
         loadRewards();
     }
 
-    public static void addMissions(MissionType... types) {
-        for (MissionType type : types) {
-            MissionManager.types.put(type.getType(), type);
+    public void addMissions(MissionType... missionTypes) {
+        for (MissionType type : missionTypes) {
+            types.put(type.getType(), type);
         }
     }
 
-    public static MissionType getType(Type type) {
+    public MissionType getType(Type type) {
         return types.getOrDefault(type, null);
     }
 
-    public static Map<MissionLevel, List<Reward>> getRewards() {
+    public Map<MissionLevel, List<Reward>> getRewards() {
         return rewards;
     }
 
-    static List<Mission> getAllDaily() {
+    public List<Mission> getAllDaily() {
         return missions.stream().filter(Mission::isDaily).collect(Collectors.toList());
     }
 
-    public static Mission getMissionFromName(String handle) {
+    public Mission getMissionFromName(String handle) {
         for (Mission mission : missions) {
             if (mission.getHandle().equals(handle)) {
                 return mission;
@@ -59,7 +59,7 @@ public class MissionManager implements Listener {
         return null;
     }
 
-    private static void loadMissions() {
+    private void loadMissions() {
         JsonParser jsonParser = new JsonParser();
 
         Bukkit.getScheduler().runTaskAsynchronously(SkycadeMissionsPlugin.getInstance(), () -> {
@@ -130,7 +130,7 @@ public class MissionManager implements Listener {
         });
     }
 
-    private static void loadRewards() {
+    private void loadRewards() {
         Bukkit.getScheduler().runTaskAsynchronously(SkycadeMissionsPlugin.getInstance(), () -> {
             try (Connection connection = CoreSettings.getInstance().getConnection()) {
                 PreparedStatement statement = connection.prepareStatement("SELECT `level`, `name`, `commands` FROM skycade_missions_rewards WHERE instance = ?");
@@ -173,7 +173,7 @@ public class MissionManager implements Listener {
         });
     }
 
-    public static void updateMissionsDatabase() {
+    public void updateMissionsDatabase() {
         AsyncScheduler.runTask(SkycadeMissionsPlugin.getInstance(), () -> {
 
             try (Connection connection = CoreSettings.getInstance().getConnection()) {

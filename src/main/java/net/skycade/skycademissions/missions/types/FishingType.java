@@ -3,8 +3,8 @@ package net.skycade.skycademissions.missions.types;
 import net.skycade.SkycadeCore.Localization;
 import net.skycade.skycademissions.MissionsUser;
 import net.skycade.skycademissions.MissionsUserManager;
+import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.Mission;
-import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.missions.Result;
 import org.bukkit.Material;
 import org.bukkit.entity.Item;
@@ -56,8 +56,8 @@ public class FishingType extends MissionType {
 
                             int count = amount;
 
-                            if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
-                                count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + 1;
+                            if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
+                                count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + 1;
                             }
 
                             user.addCounter(mission, type.toString(), count);
@@ -82,8 +82,8 @@ public class FishingType extends MissionType {
                             int count = amount;
 
                             if (((Item) e.getCaught()).getItemStack().getDurability() == durability) {
-                                if (MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, materialType.toString()) < amount) {
-                                    count = MissionManager.getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, materialType.toString()) + 1;
+                                if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, materialType.toString()) < amount) {
+                                    count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, materialType.toString()) + 1;
                                 }
                             }
 
