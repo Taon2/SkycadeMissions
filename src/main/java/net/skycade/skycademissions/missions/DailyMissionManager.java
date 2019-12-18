@@ -8,19 +8,18 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static net.skycade.skycademissions.util.Messages.NEWDAILYMISSIONS;
 
 public class DailyMissionManager extends BukkitRunnable {
 
-    private static List<String> current = new ArrayList<>();
+    private static List<Mission> current = new ArrayList<>();
     private static long lastGenerated = 0L;
 
     private static DailyMissionManager instance;
 
-    DailyMissionManager() {
+    public DailyMissionManager() {
         if (instance == null) instance = this;
 
         //Only refresh on servers that have that to true (the spawn server rather than island01 for example)
@@ -33,10 +32,10 @@ public class DailyMissionManager extends BukkitRunnable {
     @Override
     public void run() {
         if (lastGenerated == 0L) {
-            MissionManager.getAllDaily().forEach(mission -> {
+            SkycadeMissionsPlugin.getInstance().getMissionManager().getAllDaily().forEach(mission -> {
                 if (mission.getGeneratedOn() != 0 && mission.isCurrent()) {
                     lastGenerated = mission.getGeneratedOn();
-                    current.add(mission.getHandle());
+                    current.add(mission);
                 }
             });
         }
@@ -46,8 +45,8 @@ public class DailyMissionManager extends BukkitRunnable {
 
         if (lastGenerated + 86400000 < today) {
             // generate, persist
-            List<Mission> daily = MissionManager.getAllDaily();
-            List<String> oldMissions = new ArrayList<>(current);
+            List<Mission> daily = SkycadeMissionsPlugin.getInstance().getMissionManager().getAllDaily();
+            List<Mission> oldMissions = new ArrayList<>(current);
 
             current.clear();
 
@@ -56,23 +55,27 @@ public class DailyMissionManager extends BukkitRunnable {
                 do {
                     int num = ThreadLocalRandom.current().nextInt(daily.size());
                     mission = daily.get(num);
-                } while (current.contains(mission.getHandle()) || oldMissions.contains(mission.getHandle()));
+                } while (current.contains(mission) || oldMissions.contains(mission));
 
-                current.add(mission.getHandle());
+                current.add(mission);
             }
 
-            current.stream().map(MissionManager::getMissionFromName).filter(Objects::nonNull).forEach(mission -> {
-                mission.setGeneratedOn(System.currentTimeMillis());
-                mission.setCurrent(true);
-            });
+            for (Mission mission : current) {
+                if (mission != null) {
+                    mission.setGeneratedOn(System.currentTimeMillis());
+                    mission.setCurrent(true);
+                }
+            }
 
-            oldMissions.stream().map(MissionManager::getMissionFromName).filter(Objects::nonNull).forEach(mission -> {
-                mission.setGeneratedOn(0);
-                mission.setCurrent(false);
-            });
+            for (Mission mission : oldMissions) {
+                if (mission != null) {
+                    mission.setGeneratedOn(0);
+                    mission.setCurrent(false);
+                }
+            }
 
             lastGenerated = System.currentTimeMillis();
-            MissionManager.updateMissionsDatabase();
+            SkycadeMissionsPlugin.getInstance().getMissionManager().updateMissionsDatabase();
 
             NEWDAILYMISSIONS.broadcast();
         }
@@ -81,7 +84,7 @@ public class DailyMissionManager extends BukkitRunnable {
         Bukkit.getServer().getPluginManager().callEvent(missionsRefreshEvent);
     }
 
-    public List<String> getCurrent() {
+    public List<Mission> getCurrent() {
         return current;
     }
 
@@ -89,7 +92,7 @@ public class DailyMissionManager extends BukkitRunnable {
         return instance;
     }
 
-    public void setCurrent(List<String> newCurrent) {
+    public void setCurrent(List<Mission> newCurrent) {
         current = newCurrent;
     }
 

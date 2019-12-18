@@ -1,7 +1,7 @@
 package net.skycade.skycademissions.missions.types;
 
+import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.Mission;
-import net.skycade.skycademissions.missions.MissionManager;
 import net.skycade.skycademissions.missions.Result;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -12,8 +12,8 @@ import java.util.UUID;
 
 public abstract class MissionType implements Listener {
 
-    MissionType() {
-        MissionManager.addMissions(this);
+    public MissionType() {
+        SkycadeMissionsPlugin.getInstance().getMissionManager().addMissions(this);
     }
 
     public abstract Result validate(Player player, List<Map<?, ?>> params);

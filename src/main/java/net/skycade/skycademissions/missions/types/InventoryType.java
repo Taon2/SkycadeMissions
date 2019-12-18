@@ -3,6 +3,7 @@ package net.skycade.skycademissions.missions.types;
 import net.skycade.SkycadeCore.Localization;
 import net.skycade.SkycadeCore.Localization.Message;
 import net.skycade.skycademissions.MissionsUser;
+import net.skycade.skycademissions.MissionsUserManager;
 import net.skycade.skycademissions.missions.Mission;
 import net.skycade.skycademissions.missions.Result;
 import org.bukkit.Material;
@@ -19,8 +20,11 @@ public class InventoryType extends MissionType {
 
     private static final Message MISSING_ITEM = new Message("missing-item", "&cYou are missing %val% of %item%!");
 
-    public InventoryType() {
+    private TypesManager typesManager;
+
+    public InventoryType(TypesManager typesManager) {
         super();
+        this.typesManager = typesManager;
         Localization.getInstance().registerMessages("skycade.factions.missions.inventory",
                 MISSING_ITEM
         );
@@ -130,7 +134,7 @@ public class InventoryType extends MissionType {
     public int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
         int currentAmount = 0;
 
-        MissionsUser user = MissionsUser.get(uuid);
+        MissionsUser user = MissionsUserManager.getInstance().get(uuid);
         Player player = user.getPlayer();
         String[] counted = countedThing.split(":", 2);
 
@@ -163,11 +167,7 @@ public class InventoryType extends MissionType {
 
             if (user.hasPlayerCompleted(mission)) {
                 currentAmount = amount;
-            } else if (sum < amount) {
-                currentAmount = sum;
-            } else {
-                currentAmount = amount;
-            }
+            } else currentAmount = Math.min(sum, amount);
         }
 
         return currentAmount;

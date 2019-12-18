@@ -1,5 +1,6 @@
 package net.skycade.skycademissions.events;
 
+import net.skycade.skycademissions.missions.Mission;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
@@ -7,13 +8,13 @@ import java.util.List;
 
 public class MissionsRefreshEvent extends Event {
     private static final HandlerList handlers = new HandlerList();
-    private List<String> current;
+    private List<Mission> current;
 
-    public MissionsRefreshEvent(List<String> current) {
+    public MissionsRefreshEvent(List<Mission> current) {
         this.current = current;
     }
 
-    public List<String> getCurrent() {
+    public List<Mission> getCurrent() {
         return current;
     }
 

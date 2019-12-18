@@ -2,23 +2,72 @@ package net.skycade.skycademissions.missions.types;
 
 import net.skycade.SkycadeCore.Localization;
 import net.skycade.skycademissions.MissionsUser;
+import net.skycade.skycademissions.MissionsUserManager;
+import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.Mission;
 import net.skycade.skycademissions.missions.Result;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class DamageType extends MissionType {
+public class DamageType extends MissionType implements Listener {
 
     private static final Localization.Message NOT_ENOUGH_DAMAGE = new Localization.Message("not-enough-damage", "&cYou need to deal %val% more damage to %type%!");
 
-    public DamageType() {
+    private TypesManager typesManager;
+
+    public DamageType(TypesManager typesManager) {
         super();
+        this.typesManager = typesManager;
         Localization.getInstance().registerMessages("skycade.factions.missions.damage",
                 NOT_ENOUGH_DAMAGE
         );
+    }
+
+    //Listener for the DamageType
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    public void onEntityDamage(EntityDamageByEntityEvent e) {
+        //Loops through all missions for this type
+        for (Mission mission : typesManager.getCurrentCountableMissions()) {
+            if (mission.getType() == Type.DAMAGE) {
+                List<Map<?, ?>> section = mission.getParams();
+
+                for (Map<?, ?> s : section) {
+                    //Gathers type
+                    Object type = s.getOrDefault("type", null);
+                    if (type == null) continue;
+                    EntityType entityType = EntityType.valueOf(type.toString());
+
+                    //Gathers amount
+                    int amount = 1;
+                    Object obj = s.getOrDefault("amount", null);
+                    if (obj != null) amount = (Integer) obj;
+
+                    //Compares types
+                    if (e.getDamager() != null && e.getDamager().getType() == EntityType.PLAYER && e.getEntity().getType() == entityType) {
+                        Player p = (Player) e.getDamager();
+                        MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
+
+                        int count = amount;
+
+                        //Increases count
+                        if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
+                            count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) e.getDamage();
+                        }
+
+                        //Updates counter object
+                        user.addCounter(mission, e.getEntity().getType().toString(), count);
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -63,7 +112,7 @@ public class DamageType extends MissionType {
 
     @Override
     public int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
-        MissionsUser user = MissionsUser.get(uuid);
+        MissionsUser user = MissionsUserManager.getInstance().get(uuid);
 
         return user.getCurrentCount(mission, countedThing);
     }

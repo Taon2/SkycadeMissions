@@ -1,7 +1,7 @@
 name: SkycadeMissions
-version: 2.1.0-SNAPSHOT
+version: 3.1.0-SNAPSHOT
 description: Skycade Missions
 authors: ["Christian Doughty (Taon2)"]
 main: net.skycade.skycademissions.SkycadeMissionsPlugin
-softdepend: [SkycadeShop, SkycadeEnchants]
+softdepend: [SkycadeShop, SkycadeEnchants, SkycadeKitPvP]
 depend: [SkycadeCore]

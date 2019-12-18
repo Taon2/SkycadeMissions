@@ -1,40 +1,43 @@
 package net.skycade.skycademissions.missions;
 
 import net.skycade.skycademissions.MissionsUser;
+import net.skycade.skycademissions.MissionsUserManager;
+import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.types.MissionType;
 import org.bukkit.Bukkit;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.InventoryClickEvent;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.BiConsumer;
 
 import static net.skycade.skycademissions.util.Messages.*;
 
-public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEvent> {
+public class MissionVerifyAction {
 
     private final Mission mission;
 
-    MissionVerifyAction(Mission mission) {
+    public MissionVerifyAction(Mission mission) {
         this.mission = mission;
     }
 
-    @Override
-    public void accept(Player p, InventoryClickEvent event) {
-        MissionType type = MissionManager.getType(mission.getType());
-        MissionsUser user = MissionsUser.get(p.getUniqueId());
+    //Checks if the player should get the rewards or not
+    public void checkComplete(Player p) {
+        MissionType type = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType());
+        MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
 
         if (type == null) return;
 
         if (user.hasPlayerCompleted(mission)) {
             ALREADYCOMPLETED.msg(p, "%mission%", mission.getDisplayName());
+            p.playSound(p.getLocation(), Sound.ENDERMAN_TELEPORT, 1f, 1f);
             return;
         }
 
         Result result = type.validate(p, mission.getParams(), mission);
         if (result.asBoolean()) {
+            p.playSound(p.getLocation(), Sound.LEVEL_UP, 1f, 2f);
             if (mission.isDaily()) {
                 giveRewards(p);
             }
@@ -45,16 +48,19 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
             p.getOpenInventory().close();
         } else {
             if (result.getMessage() != null) p.sendMessage(result.getMessage());
+            p.playSound(p.getLocation(), Sound.ENDERMAN_TELEPORT, 1f, 1f);
+            return;
         }
 
-        user.updateCountsDatabase();
-        user.updateCompletedDatabase();
+        MissionsUserManager.getInstance().updateCompletedDatabase(user);
+        MissionsUserManager.getInstance().updateCountsDatabase(user);
     }
 
+    //Grants rewards to the player
     private void giveRewards(Player p) {
         COMPLETEMISSION.msg(p, "%mission%", mission.getDisplayName());
 
-        Map<MissionLevel, List<Reward>> rewards = MissionManager.getRewards();
+        Map<MissionLevel, List<Reward>> rewards = SkycadeMissionsPlugin.getInstance().getMissionManager().getRewards();
         List<Reward> missionRewards = rewards.get(mission.getLevel());
 
         int num = missionRewards.size();
@@ -71,17 +77,16 @@ public class MissionVerifyAction implements BiConsumer<Player, InventoryClickEve
 
     //If the player has completed all 3 missions for that day, then give them an additional bigger reward
     private void checkAllThree(Player p) {
-        List<String> daily = DailyMissionManager.getInstance().getCurrent();
-        MissionsUser user = MissionsUser.get(p.getUniqueId());
+        List<Mission> daily = DailyMissionManager.getInstance().getCurrent();
+        MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
 
-        for (String name : daily) {
-            Mission mission = MissionManager.getMissionFromName(name);
+        for (Mission mission : daily) {
             if (mission != null && !user.hasPlayerCompleted(mission)) {
                 return;
             }
         }
 
-        Map<MissionLevel, List<Reward>> rewards = MissionManager.getRewards();
+        Map<MissionLevel, List<Reward>> rewards = SkycadeMissionsPlugin.getInstance().getMissionManager().getRewards();
         List<Reward> missionRewards = rewards.get(MissionLevel.ALLTHREE);
 
         if (missionRewards == null) {

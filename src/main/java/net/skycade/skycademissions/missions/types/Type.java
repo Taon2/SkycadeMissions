@@ -13,5 +13,8 @@ public enum Type {
     SNOWBALLGUN,
     FISHING,
     LEVEL,
-    PLAYTIME
+    SPECIALABILITY,
+    KITKILL,
+    KILLSTREAK,
+    COINREWARD
 }

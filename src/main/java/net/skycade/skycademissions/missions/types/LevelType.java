@@ -2,6 +2,7 @@ package net.skycade.skycademissions.missions.types;
 
 import net.skycade.SkycadeCore.Localization;
 import net.skycade.skycademissions.MissionsUser;
+import net.skycade.skycademissions.MissionsUserManager;
 import net.skycade.skycademissions.missions.Mission;
 import net.skycade.skycademissions.missions.Result;
 import org.bukkit.Bukkit;
@@ -15,8 +16,11 @@ public class LevelType extends MissionType {
 
     private static final Localization.Message NOT_ENOUGH_LEVELS = new Localization.Message("not-enough-levels", "&cYou need to have %val% more levels!");
 
-    public LevelType() {
+    private TypesManager typesManager;
+
+    public LevelType(TypesManager typesManager) {
         super();
+        this.typesManager = typesManager;
         Localization.getInstance().registerMessages("skycade.factions.missions.levels",
                 NOT_ENOUGH_LEVELS
         );
@@ -84,7 +88,7 @@ public class LevelType extends MissionType {
     public int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
         int currentAmount = 0;
         Player player = Bukkit.getPlayer(uuid);
-        MissionsUser user = MissionsUser.get(uuid);
+        MissionsUser user = MissionsUserManager.getInstance().get(uuid);
 
         List<Map<?, ?>> section = mission.getParams();
 

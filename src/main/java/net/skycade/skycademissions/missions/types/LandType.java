@@ -2,6 +2,7 @@ package net.skycade.skycademissions.missions.types;
 
 import net.skycade.SkycadeCore.Localization;
 import net.skycade.skycademissions.MissionsUser;
+import net.skycade.skycademissions.MissionsUserManager;
 import net.skycade.skycademissions.missions.Mission;
 import net.skycade.skycademissions.missions.Result;
 import org.apache.commons.lang.StringUtils;
@@ -22,8 +23,11 @@ public class LandType extends MissionType {
 
     private static final Localization.Message MISSING_ITEM = new Localization.Message("missing-item", "&cYou are missing %val% %item%!");
 
-    public LandType() {
+    private TypesManager typesManager;
+
+    public LandType(TypesManager typesManager) {
         super();
+        this.typesManager = typesManager;
         Localization.getInstance().registerMessages("skycade.factions.missions.land",
                 MISSING_ITEM
         );
@@ -133,7 +137,7 @@ public class LandType extends MissionType {
 
     @Override
     public int getCurrentCount(UUID uuid, Mission mission, String countedThing) {
-        MissionsUser user = MissionsUser.get(uuid);
+        MissionsUser user = MissionsUserManager.getInstance().get(uuid);
 
         int currentAmount = 0;
         int amount = 1;

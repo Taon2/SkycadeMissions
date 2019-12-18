@@ -2,10 +2,11 @@ package net.skycade.skycademissions;
 
 import net.skycade.SkycadeCore.SkycadePlugin;
 import net.skycade.skycademissions.command.MissionsCommand;
+import net.skycade.skycademissions.listeners.PlayerListener;
 import net.skycade.skycademissions.missions.MissionManager;
+import net.skycade.skycademissions.missions.types.TypesManager;
 import net.skycade.skycademissions.util.Messages;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -13,6 +14,9 @@ import java.util.TreeMap;
 public class SkycadeMissionsPlugin extends SkycadePlugin {
 
     private static SkycadeMissionsPlugin instance;
+    private MissionManager missionManager;
+    private MissionsUserManager missionsUserManager;
+    private TypesManager typesManager;
 
     public SkycadeMissionsPlugin() {
         instance = this;
@@ -35,9 +39,11 @@ public class SkycadeMissionsPlugin extends SkycadePlugin {
         super.onEnable();
         defaults();
 
-        MissionManager.loadMissions();
+        missionManager = new MissionManager();
+        missionsUserManager = new MissionsUserManager();
+        new TypesManager(this);
 
-        Bukkit.getPluginManager().registerEvents(new MissionManager(), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerListener(missionsUserManager), this);
 
         Messages.init();
 
@@ -47,5 +53,9 @@ public class SkycadeMissionsPlugin extends SkycadePlugin {
     @Override
     public void onDisable() {
         super.onDisable();
+    }
+
+    public MissionManager getMissionManager() {
+        return missionManager;
     }
 }
