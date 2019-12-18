@@ -51,10 +51,6 @@ public class SpecialAbilityType extends MissionType {
                     int count = amount;
 
                     if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(event.getPlayer().getUniqueId(), mission, type.toString()) < amount) {
-                        //If the player has already used this special ability, return
-                        if (user.getSpecialAbilityKitsUsed().contains(event.getKitType().getKit().getName())) return;
-                        user.addSpecialAbilityKitUsed(event.getKitType().getKit().getName());
-
                         count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(event.getPlayer().getUniqueId(), mission, type.toString()) + 1;
                     }
 
