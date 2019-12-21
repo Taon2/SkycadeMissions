@@ -17,6 +17,7 @@ public class SkycadeMissionsPlugin extends SkycadePlugin {
     private MissionManager missionManager;
     private MissionsUserManager missionsUserManager;
     private TypesManager typesManager;
+    public static boolean v18;
 
     public SkycadeMissionsPlugin() {
         instance = this;
@@ -38,6 +39,8 @@ public class SkycadeMissionsPlugin extends SkycadePlugin {
     public void onEnable() {
         super.onEnable();
         defaults();
+
+        v18 = Bukkit.getServer().getClass().getPackage().getName().contains("1_8");
 
         missionManager = new MissionManager();
         missionsUserManager = new MissionsUserManager();
