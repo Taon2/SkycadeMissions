@@ -31,13 +31,21 @@ public class MissionVerifyAction {
 
         if (user.hasPlayerCompleted(mission)) {
             ALREADYCOMPLETED.msg(p, "%mission%", mission.getDisplayName());
-            p.playSound(p.getLocation(), Sound.ENDERMAN_TELEPORT, 1f, 1f);
+            if (SkycadeMissionsPlugin.v18) {
+                p.playSound(p.getLocation(), Sound.valueOf("ENDERMAN_TELEPORT"), 1f, 1f);
+            } else {
+                p.playSound(p.getLocation(), Sound.ENTITY_ENDERMEN_TELEPORT, 1f, 1f);
+            }
             return;
         }
 
         Result result = type.validate(p, mission.getParams(), mission);
         if (result.asBoolean()) {
-            p.playSound(p.getLocation(), Sound.LEVEL_UP, 1f, 2f);
+            if (SkycadeMissionsPlugin.v18) {
+                p.playSound(p.getLocation(), Sound.valueOf("LEVEL_UP"), 1f, 1f);
+            } else {
+                p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
+            }
             if (mission.isDaily()) {
                 giveRewards(p);
             }
@@ -48,7 +56,11 @@ public class MissionVerifyAction {
             p.getOpenInventory().close();
         } else {
             if (result.getMessage() != null) p.sendMessage(result.getMessage());
-            p.playSound(p.getLocation(), Sound.ENDERMAN_TELEPORT, 1f, 1f);
+            if (SkycadeMissionsPlugin.v18) {
+                p.playSound(p.getLocation(), Sound.valueOf("ENDERMAN_TELEPORT"), 1f, 1f);
+            } else {
+                p.playSound(p.getLocation(), Sound.ENTITY_ENDERMEN_TELEPORT, 1f, 1f);
+            }
             return;
         }
 
