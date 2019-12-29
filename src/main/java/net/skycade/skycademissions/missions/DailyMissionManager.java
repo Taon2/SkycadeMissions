@@ -2,6 +2,7 @@ package net.skycade.skycademissions.missions;
 
 import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.events.MissionsRefreshEvent;
+import net.skycade.skycademissions.missions.types.TypesManager;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -76,6 +77,8 @@ public class DailyMissionManager extends BukkitRunnable {
 
             lastGenerated = System.currentTimeMillis();
             SkycadeMissionsPlugin.getInstance().getMissionManager().updateMissionsDatabase();
+
+            TypesManager.getInstance().loadCurrentCountableMissions();
 
             NEWDAILYMISSIONS.broadcast();
         }
