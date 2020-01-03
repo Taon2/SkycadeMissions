@@ -45,7 +45,7 @@ public class MissionsUserManager {
 
                 try (Connection connection = CoreSettings.getInstance().getConnection()) {
                     String sql = "INSERT INTO skycade_missions_counters (`uuid`, `mission`, `counted`, `timestamp`, `count`, `instance`, `season`) VALUES (?, ?, ?, ?, ?, ?, ?) " +
-                            "ON DUPLICATE KEY UPDATE count = VALUES(count)";
+                            "ON DUPLICATE KEY UPDATE timestamp = VALUES(timestamp), count = VALUES(count)";
                     PreparedStatement statement = connection.prepareStatement(sql);
                     try {
                         statement.setString(1, user.getPlayer().getUniqueId().toString());
@@ -73,7 +73,7 @@ public class MissionsUserManager {
 
                 try (Connection connection = CoreSettings.getInstance().getConnection()) {
                     String sql = "INSERT INTO skycade_missions_completed (`uuid`, `mission`, `timestamp`, `instance`, `season`) VALUES (?, ?, ?, ?, ?) " +
-                            "ON DUPLICATE KEY UPDATE timestamp = VALUES(timestamp), count = VALUES(count)";
+                            "ON DUPLICATE KEY UPDATE timestamp = VALUES(timestamp)";
                     PreparedStatement statement = connection.prepareStatement(sql);
                     try {
                         statement.setString(1, user.getPlayer().getUniqueId().toString());
