@@ -73,7 +73,7 @@ public class MissionsUserManager {
 
                 try (Connection connection = CoreSettings.getInstance().getConnection()) {
                     String sql = "INSERT INTO skycade_missions_completed (`uuid`, `mission`, `timestamp`, `instance`, `season`) VALUES (?, ?, ?, ?, ?) " +
-                            "ON DUPLICATE KEY UPDATE timestamp = VALUES(timestamp)";
+                            "ON DUPLICATE KEY UPDATE timestamp = VALUES(timestamp), count = VALUES(count)";
                     PreparedStatement statement = connection.prepareStatement(sql);
                     try {
                         statement.setString(1, user.getPlayer().getUniqueId().toString());
@@ -126,6 +126,12 @@ public class MissionsUserManager {
                     Count countData = new Count(counted, count);
                     counts.put(missionHandle, new ArrayList<>(Collections.singleton(countData)));
                 }
+
+                counts.forEach((handle, countList) -> {
+                    for (Count count : countList) {
+                        Bukkit.getLogger().info(handle + " " + count.getCounted() + " " + count.getCount());
+                    }
+                });
 
                 MissionsUser user = new MissionsUser(player, counts);
                 add(player.getUniqueId(), user);
