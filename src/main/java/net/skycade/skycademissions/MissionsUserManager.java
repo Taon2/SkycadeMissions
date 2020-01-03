@@ -127,12 +127,6 @@ public class MissionsUserManager {
                     counts.put(missionHandle, new ArrayList<>(Collections.singleton(countData)));
                 }
 
-                counts.forEach((handle, countList) -> {
-                    for (Count count : countList) {
-                        Bukkit.getLogger().info(handle + " " + count.getCounted() + " " + count.getCount());
-                    }
-                });
-
                 MissionsUser user = new MissionsUser(player, counts);
                 add(player.getUniqueId(), user);
             } catch (SQLException e) {
