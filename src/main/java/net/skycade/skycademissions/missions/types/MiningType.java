@@ -32,7 +32,9 @@ public class MiningType extends MissionType {
 
     //Listener for the MiningType
     @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onBlockBreak(BlockBreakEvent e) {
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (event.isCancelled()) return;
+
         //Loops through all missions for this type
         for (Mission mission : typesManager.getCurrentCountableMissions()) {
             if (mission.getType() == Type.MINING) {
@@ -49,8 +51,8 @@ public class MiningType extends MissionType {
                         Object obj = s.getOrDefault("amount", null);
                         if (obj != null) amount = (Integer) obj;
 
-                        if (e.getPlayer() != null) {
-                            Player p = e.getPlayer();
+                        if (event.getPlayer() != null) {
+                            Player p = event.getPlayer();
                             MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
 
                             int count = amount;
@@ -70,8 +72,8 @@ public class MiningType extends MissionType {
                         Object obj = s.getOrDefault("amount", null);
                         if (obj != null) amount = (Integer) obj;
 
-                        if (e.getPlayer() != null && e.getBlock().getType() == materialType) {
-                            Player p = e.getPlayer();
+                        if (event.getPlayer() != null && event.getBlock().getType() == materialType) {
+                            Player p = event.getPlayer();
                             MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
 
                             int count = amount;

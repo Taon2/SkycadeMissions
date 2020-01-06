@@ -32,7 +32,7 @@ public class KillType extends MissionType {
 
     //Listener for the KillType
     @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onEntityDeath(EntityDeathEvent e) {
+    public void onEntityDeath(EntityDeathEvent event) {
         //Loops through all missions for this type
         for (Mission mission : typesManager.getCurrentCountableMissions()) {
             if (mission.getType() == Type.KILLS) {
@@ -47,8 +47,8 @@ public class KillType extends MissionType {
                         Object obj = s.getOrDefault("amount", null);
                         if (obj != null) amount = (Integer) obj;
 
-                        if (e.getEntity().getKiller() != null) {
-                            Player p = e.getEntity().getKiller();
+                        if (event.getEntity().getKiller() != null) {
+                            Player p = event.getEntity().getKiller();
                             MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
 
                             int count = amount;
@@ -66,8 +66,8 @@ public class KillType extends MissionType {
                         Object obj = s.getOrDefault("amount", null);
                         if (obj != null) amount = (Integer) obj;
 
-                        if (e.getEntity().getKiller() != null && e.getEntity().getKiller().getType() == EntityType.PLAYER && e.getEntity().getType() == entityType) {
-                            Player p = e.getEntity().getKiller();
+                        if (event.getEntity().getKiller() != null && event.getEntity().getKiller().getType() == EntityType.PLAYER && event.getEntity().getType() == entityType) {
+                            Player p = event.getEntity().getKiller();
                             MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
 
                             int count = amount;

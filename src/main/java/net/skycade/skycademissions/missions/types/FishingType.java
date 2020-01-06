@@ -33,7 +33,9 @@ public class FishingType extends MissionType {
 
     //Listener for the FishingType
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
-    public void onFishCatch(PlayerFishEvent e) {
+    public void onFishCatch(PlayerFishEvent event) {
+        if (event.isCancelled()) return;
+
         //Loops through all missions for this type
         for (Mission mission : typesManager.getCurrentCountableMissions()) {
             if (mission.getType() == Type.FISHING) {
@@ -50,8 +52,8 @@ public class FishingType extends MissionType {
                         Object obj = s.getOrDefault("amount", null);
                         if (obj != null) amount = (Integer) obj;
 
-                        if (e.getPlayer() != null && e.getCaught() != null && e.getCaught() instanceof Item) {
-                            Player p = e.getPlayer();
+                        if (event.getPlayer() != null && event.getCaught() != null && event.getCaught() instanceof Item) {
+                            Player p = event.getPlayer();
                             MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
 
                             int count = amount;
@@ -75,13 +77,13 @@ public class FishingType extends MissionType {
                         obj = s.getOrDefault("durability", null);
                         if (obj != null && (short) obj != -1) durability = (short) obj;
 
-                        if (e.getPlayer() != null && e.getCaught() != null && e.getCaught() instanceof Item && ((Item) e.getCaught()).getItemStack().getType() == materialType && ((Item) e.getCaught()).getItemStack().getDurability() == durability) {
-                            Player p = e.getPlayer();
+                        if (event.getPlayer() != null && event.getCaught() != null && event.getCaught() instanceof Item && ((Item) event.getCaught()).getItemStack().getType() == materialType && ((Item) event.getCaught()).getItemStack().getDurability() == durability) {
+                            Player p = event.getPlayer();
                             MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
 
                             int count = amount;
 
-                            if (((Item) e.getCaught()).getItemStack().getDurability() == durability) {
+                            if (((Item) event.getCaught()).getItemStack().getDurability() == durability) {
                                 if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, materialType.toString()) < amount) {
                                     count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, materialType.toString()) + 1;
                                 }

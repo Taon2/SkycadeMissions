@@ -32,6 +32,8 @@ public class CoinRewardType extends MissionType {
     //Listener for ShopType
     @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
     public void onKitPvPCoinReward(KitPvPCoinsRewardEvent event) {
+        if (event.isCancelled()) return;
+
         //Loops through all missions for this type
         for (Mission mission : typesManager.getCurrentCountableMissions()) {
             if (mission.getType() == Type.COINREWARD) {

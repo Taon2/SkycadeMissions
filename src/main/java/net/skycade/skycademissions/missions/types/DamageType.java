@@ -33,7 +33,9 @@ public class DamageType extends MissionType implements Listener {
 
     //Listener for the DamageType
     @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onEntityDamage(EntityDamageByEntityEvent e) {
+    public void onEntityDamage(EntityDamageByEntityEvent event) {
+        if (event.isCancelled()) return;
+
         //Loops through all missions for this type
         for (Mission mission : typesManager.getCurrentCountableMissions()) {
             if (mission.getType() == Type.DAMAGE) {
@@ -51,19 +53,19 @@ public class DamageType extends MissionType implements Listener {
                     if (obj != null) amount = (Integer) obj;
 
                     //Compares types
-                    if (e.getDamager() != null && e.getDamager().getType() == EntityType.PLAYER && e.getEntity().getType() == entityType) {
-                        Player p = (Player) e.getDamager();
+                    if (event.getDamager() != null && event.getDamager().getType() == EntityType.PLAYER && event.getEntity().getType() == entityType) {
+                        Player p = (Player) event.getDamager();
                         MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
 
                         int count = amount;
 
                         //Increases count
                         if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
-                            count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) e.getDamage();
+                            count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) event.getDamage();
                         }
 
                         //Updates counter object
-                        user.addCounter(mission, e.getEntity().getType().toString(), count);
+                        user.addCounter(mission, event.getEntity().getType().toString(), count);
                     }
                 }
             }
