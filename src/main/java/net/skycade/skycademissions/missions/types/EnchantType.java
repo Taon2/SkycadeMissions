@@ -33,7 +33,7 @@ public class EnchantType extends MissionType implements Listener {
     }
 
     //Listener for the EnchantType
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onSkycadeCustomEnchantItem(SkycadeCustomEnchantItemEvent event) {
         //Loops through all missions for this type
         for (Mission mission : typesManager.getCurrentCountableMissions()) {

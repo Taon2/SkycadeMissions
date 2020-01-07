@@ -30,7 +30,7 @@ public class ShopType extends MissionType {
     }
 
     //Listener for ShopType
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onSkycadeShopSell(PostSellTransactionEvent event) {
         //Loops through all missions for this type
         for (Mission mission : typesManager.getCurrentCountableMissions()) {

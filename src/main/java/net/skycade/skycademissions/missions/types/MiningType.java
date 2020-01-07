@@ -31,7 +31,7 @@ public class MiningType extends MissionType {
     }
 
     //Listener for the MiningType
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onBlockBreak(BlockBreakEvent event) {
         if (event.isCancelled()) return;
 

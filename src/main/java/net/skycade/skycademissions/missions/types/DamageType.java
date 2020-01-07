@@ -32,7 +32,7 @@ public class DamageType extends MissionType implements Listener {
     }
 
     //Listener for the DamageType
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
         if (event.isCancelled()) return;
 

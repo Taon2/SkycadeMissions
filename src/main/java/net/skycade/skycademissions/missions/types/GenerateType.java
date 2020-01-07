@@ -30,7 +30,7 @@ public class GenerateType extends MissionType {
     }
 
     //Listener for the GenerateType
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onSkycadeEnchantGenerate(SkycadeGenerateEnchantEvent event) {
         //Loops through all missions for this type
         for (Mission mission : typesManager.getCurrentCountableMissions()) {

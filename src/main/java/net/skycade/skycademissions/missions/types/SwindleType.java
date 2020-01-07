@@ -30,7 +30,7 @@ public class SwindleType extends MissionType {
     }
 
     //Listener for the SwindleType
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onSkycadeSwindle(SkycadeSwindlerEvent event) {
         //Loops through all missions for this type
         for (Mission mission : typesManager.getCurrentCountableMissions()) {
