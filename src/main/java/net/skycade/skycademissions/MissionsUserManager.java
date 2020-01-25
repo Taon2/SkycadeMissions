@@ -68,6 +68,8 @@ public class MissionsUserManager {
     }
 
     public void updateCompletedDatabase(MissionsUser user) {
+        if(user == null || user.getCompleted() == null || user.getCompleted().size() < 1)
+            return; // no completed missions / null, so no need to insert into the DB. It saves time, processing power, and is easier on the server
         user.getCompleted().forEach((missionHandle, timestamp) -> {
             AsyncScheduler.runTask(SkycadeMissionsPlugin.getInstance(), () -> {
 
