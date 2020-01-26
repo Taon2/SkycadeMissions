@@ -117,8 +117,18 @@ public class FishingType extends MissionType {
             if (obj != null) amount = (Integer) obj;
 
             short durability = -1;
+            Double objDura;
+
+            try {
+                assert obj != null;
+                objDura = ((Integer) obj).doubleValue();
+            } catch (NumberFormatException e) {
+                // not an int, try double
+                objDura = ((Double) obj);
+            }
+
             obj = s.getOrDefault("durability", null);
-            if (obj != null && ((Integer) obj).shortValue() != -1) durability = ((Integer) obj).shortValue();
+            if (obj != null && objDura.shortValue() != -1) durability = objDura.shortValue();
 
             String countedThing = type.toString();
 
