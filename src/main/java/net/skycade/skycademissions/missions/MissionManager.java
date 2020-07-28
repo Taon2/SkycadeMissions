@@ -124,10 +124,10 @@ public class MissionManager implements Listener {
                 e.printStackTrace();
             }
 
-            new DailyMissionManager();
-
             TypesManager.getInstance().loadCurrentCountableMissions();
         });
+
+        new DailyMissionManager();
     }
 
     private void loadRewards() {

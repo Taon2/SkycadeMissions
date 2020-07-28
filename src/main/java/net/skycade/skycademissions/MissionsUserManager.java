@@ -40,6 +40,8 @@ public class MissionsUserManager {
     }
 
     public void updateCountsDatabase(MissionsUser user) {
+        if(user == null || user.getCounts() == null || user.getCounts().size() < 1)
+            return; // no counted missions / null, so no need to insert into the DB. It saves time, processing power, and is easier on the server
         user.getCounts().forEach((missionHandle, missionCounts) -> missionCounts.forEach(count -> {
             AsyncScheduler.runTask(SkycadeMissionsPlugin.getInstance(), () -> {
 

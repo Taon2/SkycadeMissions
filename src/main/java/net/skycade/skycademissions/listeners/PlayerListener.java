@@ -17,17 +17,17 @@ public class PlayerListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public void onPlayerLogin(PlayerJoinEvent e) {
-        missionsUserManager.load(e.getPlayer());
+    public void onPlayerLogin(PlayerJoinEvent event) {
+        missionsUserManager.load(event.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPlayerLogout(PlayerQuitEvent e) {
-        MissionsUser user = missionsUserManager.get(e.getPlayer().getUniqueId());
+    public void onPlayerLogout(PlayerQuitEvent event) {
+        MissionsUser user = missionsUserManager.get(event.getPlayer().getUniqueId());
 
-        missionsUserManager.updateCompletedDatabase(user);
         missionsUserManager.updateCountsDatabase(user);
+        missionsUserManager.updateCompletedDatabase(user);
 
-        missionsUserManager.remove(e.getPlayer().getUniqueId());
+        missionsUserManager.remove(event.getPlayer().getUniqueId());
     }
 }
