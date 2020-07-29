@@ -33,6 +33,12 @@ public class DailyMissionManager extends BukkitRunnable {
     @Override
     public void run() {
         if (lastGenerated == 0L) {
+            if (SkycadeMissionsPlugin.getInstance().getMissionManager() == null ||
+                    SkycadeMissionsPlugin.getInstance().getMissionManager().getAllDaily() == null ||
+                    SkycadeMissionsPlugin.getInstance().getMissionManager().getAllDaily().size() <= 0) {
+                return;
+            }
+
             SkycadeMissionsPlugin.getInstance().getMissionManager().getAllDaily().forEach(mission -> {
                 if (mission.getGeneratedOn() != 0 && mission.isCurrent()) {
                     lastGenerated = mission.getGeneratedOn();
