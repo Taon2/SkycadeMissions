@@ -44,7 +44,7 @@ public class SkycadeMissionsPlugin extends SkycadePlugin {
 
         missionManager = new MissionManager();
         missionsUserManager = new MissionsUserManager();
-        new TypesManager(this);
+        typesManager = new TypesManager(this);
 
         Bukkit.getPluginManager().registerEvents(new PlayerListener(missionsUserManager), this);
 
@@ -60,5 +60,9 @@ public class SkycadeMissionsPlugin extends SkycadePlugin {
 
     public MissionManager getMissionManager() {
         return missionManager;
+    }
+
+    public TypesManager getTypesManager() {
+        return typesManager;
     }
 }

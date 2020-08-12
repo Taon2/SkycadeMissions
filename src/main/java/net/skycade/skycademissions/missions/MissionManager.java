@@ -124,7 +124,7 @@ public class MissionManager implements Listener {
                 e.printStackTrace();
             }
 
-            TypesManager.getInstance().loadCurrentCountableMissions();
+            SkycadeMissionsPlugin.getInstance().getTypesManager().loadCurrentCountableMissions();
         });
 
         new DailyMissionManager();

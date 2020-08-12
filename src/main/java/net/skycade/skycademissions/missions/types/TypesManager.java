@@ -13,8 +13,6 @@ public class TypesManager {
 
     private SkycadeMissionsPlugin plugin;
 
-    private static TypesManager instance;
-
     private List<Mission> currentCountableMissions = new ArrayList<>();
 
     private static List<Type> countableTypes;
@@ -33,14 +31,13 @@ public class TypesManager {
                 Type.SPECIALABILITY,
                 Type.KITKILL,
                 Type.KILLSTREAK,
-                Type.COINREWARD
+                Type.COINREWARD,
+                Type.ISLAND_LEVEL
         );
     }
 
     public TypesManager(SkycadeMissionsPlugin plugin) {
         this.plugin = plugin;
-        instance = this;
-
         registerTypes();
     }
 
@@ -73,6 +70,11 @@ public class TypesManager {
             Bukkit.getPluginManager().registerEvents(new KillstreakType(this), plugin);
             Bukkit.getPluginManager().registerEvents(new CoinRewardType(this), plugin);
         }
+
+        //Don't suicide if skyblock plugin isn't loaded
+        if (Bukkit.getPluginManager().getPlugin("SkycadeSkyblock") != null) {
+            Bukkit.getPluginManager().registerEvents(new IslandLevelType(this), plugin);
+        }
     }
 
     public void loadCurrentCountableMissions() {
@@ -85,11 +87,5 @@ public class TypesManager {
 
     public List<Mission> getCurrentCountableMissions() {
         return currentCountableMissions;
-    }
-
-    public static TypesManager getInstance() {
-        if (instance == null)
-            instance = new TypesManager(SkycadeMissionsPlugin.getInstance());
-        return instance;
     }
 }

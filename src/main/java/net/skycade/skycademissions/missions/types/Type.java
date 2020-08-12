@@ -16,5 +16,6 @@ public enum Type {
     SPECIALABILITY,
     KITKILL,
     KILLSTREAK,
-    COINREWARD
+    COINREWARD,
+    ISLAND_LEVEL
 }
