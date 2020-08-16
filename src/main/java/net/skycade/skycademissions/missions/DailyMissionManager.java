@@ -26,7 +26,7 @@ public class DailyMissionManager extends BukkitRunnable {
         if (SkycadeMissionsPlugin.getInstance().getConfig() != null && !SkycadeMissionsPlugin.getInstance().getConfig().getBoolean("refresh-missions")) return;
 
         run();
-        runTaskTimer(SkycadeMissionsPlugin.getInstance(), 1L, 1200L);
+        runTaskTimer(SkycadeMissionsPlugin.getInstance(), 0L, 1200L);
     }
 
     @Override

@@ -38,10 +38,9 @@ public class TypesManager {
 
     public TypesManager(SkycadeMissionsPlugin plugin) {
         this.plugin = plugin;
-        registerTypes();
     }
 
-    private void registerTypes() {
+    public void registerTypes() {
         Bukkit.getPluginManager().registerEvents(new DamageType(this), plugin);
         Bukkit.getPluginManager().registerEvents(new FishingType(this), plugin);
         Bukkit.getPluginManager().registerEvents(new InventoryType(this), plugin);

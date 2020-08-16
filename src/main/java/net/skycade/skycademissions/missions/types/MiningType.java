@@ -6,6 +6,7 @@ import net.skycade.skycademissions.MissionsUserManager;
 import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.Mission;
 import net.skycade.skycademissions.missions.Result;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,6 +16,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class MiningType extends MissionType {
 
@@ -35,9 +37,23 @@ public class MiningType extends MissionType {
     public void onBlockBreak(BlockBreakEvent event) {
         if (event.isCancelled()) return;
 
+        int randomId = ThreadLocalRandom.current().nextInt();
+        if (SkycadeMissionsPlugin.getInstance().getMissionManager().isDebug) {
+            Bukkit.getLogger().info(randomId + "Running block break for " + event.getPlayer().getName());
+        }
+
         //Loops through all missions for this type
         for (Mission mission : typesManager.getCurrentCountableMissions()) {
+
+            if (SkycadeMissionsPlugin.getInstance().getMissionManager().isDebug) {
+                Bukkit.getLogger().info(randomId + "Looping through currentCountableMissions " + mission.getHandle());
+            }
+
             if (mission.getType() == Type.MINING) {
+
+                if (SkycadeMissionsPlugin.getInstance().getMissionManager().isDebug) {
+                    Bukkit.getLogger().info(randomId + "Confirmed " + mission.getHandle() + " is type MINING");
+                }
 
                 List<Map<?, ?>> section = mission.getParams();
 

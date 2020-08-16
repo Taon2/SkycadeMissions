@@ -27,9 +27,9 @@ public class MissionManager implements Listener {
 
     private TreeMap<MissionLevel, List<Reward>> rewards = new TreeMap<>();
 
+    public boolean isDebug = false;
+
     public MissionManager() {
-        loadMissions();
-        loadRewards();
     }
 
     public void addMissions(MissionType... missionTypes) {
@@ -59,7 +59,7 @@ public class MissionManager implements Listener {
         return null;
     }
 
-    private void loadMissions() {
+    public void loadMissions() {
         JsonParser jsonParser = new JsonParser();
 
         Bukkit.getScheduler().runTaskAsynchronously(SkycadeMissionsPlugin.getInstance(), () -> {
@@ -124,13 +124,15 @@ public class MissionManager implements Listener {
                 e.printStackTrace();
             }
 
+            new DailyMissionManager();
+
+            SkycadeMissionsPlugin.getInstance().getTypesManager().registerTypes();
+
             SkycadeMissionsPlugin.getInstance().getTypesManager().loadCurrentCountableMissions();
         });
-
-        new DailyMissionManager();
     }
 
-    private void loadRewards() {
+    public void loadRewards() {
         Bukkit.getScheduler().runTaskAsynchronously(SkycadeMissionsPlugin.getInstance(), () -> {
             try (Connection connection = CoreSettings.getInstance().getConnection()) {
                 PreparedStatement statement = connection.prepareStatement("SELECT `level`, `name`, `commands` FROM skycade_missions_rewards WHERE instance = ?");
