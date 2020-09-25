@@ -41,24 +41,21 @@ public class ShopType extends MissionType {
                     Object type = s.getOrDefault("type", null);
                     if (type == null) continue;
 
-                    //Handles missions that count $
-                    if (type.toString().equals("$")) {
-                        int amount = 1;
-                        Object obj = s.getOrDefault("amount", null);
-                        if (obj != null) amount = (Integer) obj;
+                    int amount = 1;
+                    Object obj = s.getOrDefault("amount", null);
+                    if (obj != null) amount = (Integer) obj;
 
-                        if (event.getPlayer() != null) {
-                            Player p = event.getPlayer();
-                            MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
+                    if (event.getPlayer() != null) {
+                        Player p = event.getPlayer();
+                        MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
 
-                            int count = amount;
+                        int count = amount;
 
-                            if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
-                                count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) event.getMoneyGained();
-                            }
-
-                            user.addCounter(mission, type.toString(), count);
+                        if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
+                            count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) event.getMoneyGained();
                         }
+
+                        user.addCounter(mission, type.toString(), count);
                     }
                 }
             }

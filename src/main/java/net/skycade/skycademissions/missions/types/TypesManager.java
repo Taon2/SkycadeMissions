@@ -11,11 +11,11 @@ import java.util.List;
 
 public class TypesManager {
 
-    private SkycadeMissionsPlugin plugin;
+    private final SkycadeMissionsPlugin plugin;
 
     private List<Mission> currentCountableMissions = new ArrayList<>();
 
-    private static List<Type> countableTypes;
+    private static final List<Type> countableTypes;
 
     static {
         countableTypes = Arrays.asList(
