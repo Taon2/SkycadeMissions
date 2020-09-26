@@ -7,6 +7,7 @@ import net.skycade.skycademissions.SkycadeMissionsPlugin;
 import net.skycade.skycademissions.missions.Mission;
 import net.skycade.skycademissions.missions.Result;
 import net.skycade.skycadeshop.impl.skycade.event.PostSellTransactionEvent;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -41,21 +42,42 @@ public class ShopType extends MissionType {
                     Object type = s.getOrDefault("type", null);
                     if (type == null) continue;
 
-                    int amount = 1;
-                    Object obj = s.getOrDefault("amount", null);
-                    if (obj != null) amount = (Integer) obj;
+                    if (type.toString().equals("ANY")) {
+                        int amount = 1;
+                        Object obj = s.getOrDefault("amount", null);
+                        if (obj != null) amount = (Integer) obj;
 
-                    if (event.getPlayer() != null) {
-                        Player p = event.getPlayer();
-                        MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
+                        if (event.getPlayer() != null) {
+                            Player p = event.getPlayer();
+                            MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
 
-                        int count = amount;
+                            int count = amount;
 
-                        if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
-                            count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) event.getMoneyGained();
+                            if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
+                                count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) event.getMoneyGained();
+                            }
+
+                            user.addCounter(mission, type.toString(), count);
                         }
+                    } else {
+                        Material materialType = Material.valueOf(type.toString());
 
-                        user.addCounter(mission, type.toString(), count);
+                        int amount = 1;
+                        Object obj = s.getOrDefault("amount", null);
+                        if (obj != null) amount = (Integer) obj;
+
+                        if (event.getPlayer() != null && event.getShoppable().getGuiItem().getType() == materialType) {
+                            Player p = event.getPlayer();
+                            MissionsUser user = MissionsUserManager.getInstance().get(p.getUniqueId());
+
+                            int count = amount;
+
+                            if (SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) < amount) {
+                                count = SkycadeMissionsPlugin.getInstance().getMissionManager().getType(mission.getType()).getCurrentCount(p.getUniqueId(), mission, type.toString()) + (int) event.getMoneyGained();
+                            }
+
+                            user.addCounter(mission, type.toString(), count);
+                        }
                     }
                 }
             }

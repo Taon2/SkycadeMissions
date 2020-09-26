@@ -32,7 +32,8 @@ public class TypesManager {
                 Type.KITKILL,
                 Type.KILLSTREAK,
                 Type.COINREWARD,
-                Type.ISLAND_LEVEL
+                Type.ISLAND_LEVEL,
+                Type.TAMING
         );
     }
 
@@ -48,6 +49,7 @@ public class TypesManager {
         Bukkit.getPluginManager().registerEvents(new LandType(this), plugin);
         Bukkit.getPluginManager().registerEvents(new LevelType(this), plugin);
         Bukkit.getPluginManager().registerEvents(new MiningType(this), plugin);
+        Bukkit.getPluginManager().registerEvents(new TamingType(this), plugin);
 
         //Don't suicide if shop plugin isn't loaded
         if (Bukkit.getPluginManager().getPlugin("SkycadeShop") != null) {

@@ -33,8 +33,10 @@ public class MissionVerifyAction {
             ALREADYCOMPLETED.msg(p, "%mission%", mission.getDisplayName());
             if (SkycadeMissionsPlugin.v18) {
                 p.playSound(p.getLocation(), Sound.valueOf("ENDERMAN_TELEPORT"), 1f, 1f);
+            } else if (SkycadeMissionsPlugin.v112){
+                p.playSound(p.getLocation(), Sound.valueOf("ENTITY_ENDERMEN_TELEPORT"), 1f, 1f);
             } else {
-                p.playSound(p.getLocation(), Sound.ENTITY_ENDERMEN_TELEPORT, 1f, 1f);
+                p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
             }
             return;
         }
@@ -58,8 +60,10 @@ public class MissionVerifyAction {
             if (result.getMessage() != null) p.sendMessage(result.getMessage());
             if (SkycadeMissionsPlugin.v18) {
                 p.playSound(p.getLocation(), Sound.valueOf("ENDERMAN_TELEPORT"), 1f, 1f);
+            } else if (SkycadeMissionsPlugin.v112){
+                p.playSound(p.getLocation(), Sound.valueOf("ENTITY_ENDERMEN_TELEPORT"), 1f, 1f);
             } else {
-                p.playSound(p.getLocation(), Sound.ENTITY_ENDERMEN_TELEPORT, 1f, 1f);
+                p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1f);
             }
             return;
         }
