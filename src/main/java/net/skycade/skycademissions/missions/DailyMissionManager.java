@@ -105,8 +105,10 @@ public class DailyMissionManager extends BukkitRunnable {
             NEWDAILYMISSIONS.broadcast();
         }
 
-        MissionsRefreshEvent missionsRefreshEvent = new MissionsRefreshEvent(current);
-        Bukkit.getServer().getPluginManager().callEvent(missionsRefreshEvent);
+        Bukkit.getScheduler().runTask(SkycadeMissionsPlugin.getInstance(), () -> {
+            MissionsRefreshEvent missionsRefreshEvent = new MissionsRefreshEvent(current);
+            Bukkit.getServer().getPluginManager().callEvent(missionsRefreshEvent);
+        });
     }
 
     public List<Mission> getCurrent() {

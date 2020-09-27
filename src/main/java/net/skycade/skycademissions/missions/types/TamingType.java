@@ -50,7 +50,7 @@ public class TamingType extends MissionType {
                 Bukkit.getLogger().info(randomId + "Looping through currentCountableMissions " + mission.getHandle());
             }
 
-            if (mission.getType() == Type.MINING) {
+            if (mission.getType() == Type.TAMING) {
 
                 if (SkycadeMissionsPlugin.getInstance().getMissionManager().isDebug) {
                     Bukkit.getLogger().info(randomId + "Confirmed " + mission.getHandle() + " is type TAMING");
