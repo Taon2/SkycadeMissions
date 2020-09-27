@@ -46,7 +46,7 @@ public class Mission {
 
             this.durability = Byte.parseByte(icon.substring((colonLocation+1)));
         }
-        else{
+        else {
             this.icon = Material.valueOf(icon.toUpperCase());
             this.durability = 0;
         }
